@@ -9,6 +9,10 @@ public class FileReaderHandler {
 
     private final String LOGIN_FILE = "login.txt";
 
+    /*
+     * This code reads the LOGIN_FILE file and checks if the username and password match. 
+     * It takes two parameters: a username (String user) and a password (String pass).
+     */
     public int clientLogin(String user, String pass) {
         File file = new File("login.txt");
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
