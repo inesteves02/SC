@@ -10,7 +10,10 @@ public class Tintolmarket {
     private static ObjectInputStream in;
     private static ObjectOutputStream out;
 
-    // enviar user e pass ao server
+    /*
+     * This code creates a socket connection to a server at localhost on port 12345, and then creates input and output streams for communication. 
+     * It then calls the clientLogin() method, and finally closes the input and output streams.
+     */
     public static void main(String[] args) {
         try {
             // iniciar socket

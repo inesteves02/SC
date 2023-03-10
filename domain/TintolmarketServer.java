@@ -15,40 +15,75 @@ public class TintolmarketServer {
 	private static FileWriterHandler fileWriterH;
 	private static UserCatalog userCatalog;
     
+	/*
+	 * This code is the main method of a TintolmarketServer class. 
+	 * It prints "Server is starting..." to the console, creates a new instance of the TintolmarketServer class, 
+	 * creates new instances of FileWriterHandler, FileReaderHandler and UserCatalog classes, 
+	 * and then calls the startServer() method on the TintolmarketServer instance.
+	 */
     public static void main(String[] args) {
         
         System.out.println("Server is starting...");
+
         TintolmarketServer server = new TintolmarketServer();
-		fileWriterH = new FileWriterHandler();
-		fileReaderH = new FileReaderHandler();
-		userCatalog = new UserCatalog();
-        server.startServer();
+
+		server.init(); // Initialize the required objects
+
+        server.startServer(); // Start the server and wait for clients
     }
 
+	private void init() { // Initialize the required objects 
+
+		fileWriterH = new FileWriterHandler(); 
+
+		fileReaderH = new FileReaderHandler(); 
+
+		userCatalog = new UserCatalog(); 
+
+    } 
+
+	/*
+	 * This code creates a ServerSocket object with port number 12345 and then enters an infinite loop. 
+	 * In each iteration of the loop, it calls the accept() method of the ServerSocket object to wait for a client connection. 
+	 * When a client connects, it creates a new ServerThread object and starts it. 
+	 * The loop continues until the program is terminated. The commented out line at the end closes the ServerSocket object, 
+	 * but this line is never reached due to the infinite loop.
+	 */
     public void startServer (){
 		ServerSocket sSoc = null;
         
 		try {
 			sSoc = new ServerSocket(12345);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
-		}
-         
-		while(true) {
-			try {
-				Socket inSoc = sSoc.accept();
-				ServerThread newServerThread = new ServerThread(inSoc);
-				newServerThread.start();
-		    }
-		    catch (IOException e) {
-		        e.printStackTrace();
-		    }
-		    
-		}
-		//sSoc.close();
-	}
 
+            while(true) {
+                try {
+                    Socket inSoc = sSoc.accept();
+                    ServerThread newServerThread = new ServerThread(inSoc);
+                    newServerThread.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }   
+            }
+
+        } catch (IOException e) { //catch IOException outside of while loop to ensure that the server socket is closed when an error occurs 
+            System.err.println(e.getMessage());  //print out the error message 
+
+            try { //attempt to close the server socket 
+                sSoc.close();   //close the server socket 
+
+            } catch (IOException ex) { //catch any errors that occur when closing the server socket 
+
+                System.err.println(ex.getMessage()); //print out the error message 
+
+            } finally { //finally block to ensure that the program exits with an error code if an exception is thrown  
+
+                System.exit(-1); //exit with an error code of -1 
+
+            }   
+
+        }    
+
+    }
 
 	//Threads used to communicate with the clients
 	class ServerThread extends Thread {
