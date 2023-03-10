@@ -1,3 +1,5 @@
+package domain;
+
 public class Wine {
 
     private String name;
@@ -20,5 +22,9 @@ public class Wine {
         this.quantity = quantity;
         this.price = price;
         this.isForSale = isForSale;
+    }
+
+    public String getName() {
+        return name;
     }
 }

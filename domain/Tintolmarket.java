@@ -1,3 +1,5 @@
+package domain;
+
 import java.util.Scanner;
 import java.net.Socket;
 import java.io.ObjectInputStream;
@@ -12,15 +14,13 @@ public class Tintolmarket {
     public static void main(String[] args) {
         try {
             // iniciar socket
-            Socket clientSocket = new Socket("localhost", 23456);
+            Socket clientSocket = new Socket("localhost", 12345);
 
             // iniciar streams
             in = new ObjectInputStream(clientSocket.getInputStream());
             out = new ObjectOutputStream(clientSocket.getOutputStream());
 
-            if (clientLogin()){
-                clientInteraction();
-            }
+            clientLogin();
 
             // fechar streams
             in.close();
@@ -31,27 +31,34 @@ public class Tintolmarket {
 
     }
 
-    private boolean clientLogin() {
+    /*
+     * This code is used to log in a client. 
+     * It creates a Scanner object to get the username and password from the user. 
+     * It then writes the username and password to an output stream, and reads a boolean value from an input stream. 
+     * If an exception is thrown, it prints the stack trace.
+     */
+    private static void clientLogin() {
         try {
             Scanner sc = new Scanner(System.in);
 
-            System.out.print("Inserir username: ");
+            System.out.print("Insert username:");
             String user = sc.nextLine();
 
-            System.out.print("Inserir password: ");
+            System.out.print("Insert password:");
             String pass = sc.nextLine();
 
             out.writeObject(user);
             out.writeObject(pass);
 
-            boolean answer = (Boolean) in.readObject();
+            String answer = (String) in.readObject();
+            System.out.println(answer);
             
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void clientInteraction() {
-       
+    private static void clientInteraction() {
+       // TODO
     } 
 }
