@@ -6,8 +6,8 @@ public class UserCatalog {
     
     private HashMap<String, User> users;
 
-    public UserCatalog() {
-        users = new HashMap<String, User>();
+    public UserCatalog(HashMap<String, User> users) {
+        this.users = users;
     }
 
     public User getUser(String name) {
@@ -15,6 +15,6 @@ public class UserCatalog {
     }
 
     public void addUser(String name) {
-        users.put(name, new User(name));
+        users.put(name, new User(name, 200, new HashMap<String, Wine>()));
     }
 }
