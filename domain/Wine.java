@@ -9,16 +9,10 @@ public class Wine {
     private double rating;
     private boolean isForSale;
 
-    public Wine(String name, String image) {
+    public Wine(String name, String image, double price, int quantity, double rating, boolean isForSale) {
         this.name = name;
         this.image = image;
-        this.isForSale = false;
-    }
-
-    public Wine(String name, String image, double price, int quantity, double averageRating, boolean isForSale) {
-        this.name = name;
-        this.image = image;
-        this.rating = averageRating;
+        this.rating = rating;
         this.quantity = quantity;
         this.price = price;
         this.isForSale = isForSale;
@@ -26,5 +20,25 @@ public class Wine {
 
     public String getName() {
         return name;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public boolean isForSale() {
+        return isForSale;
     }
 }
