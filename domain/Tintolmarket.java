@@ -9,6 +9,17 @@ public class Tintolmarket {
     
     private static ObjectInputStream in;
     private static ObjectOutputStream out;
+    private static Scanner sc;
+    private static final String HELP =    "Options available:\n" 
+                                        + "add <wine> <image> - add a new wine to the catalog\n "
+                                        + "sell <wine> <value> <quantity> - sell a wine from the catalog\n "
+                                        + "view <wine> - view the details of a wine\n "
+                                        + "buy <wine> <seller> <quantity> - buy a wine from the catalog\n "
+                                        + "wallet - view the current balance of the wallet\n "
+                                        + "classify <wine> <stars> - classify a wine\n "
+                                        + "talk <user> <message> - send a message to another user\n "
+                                        + "read - read the messages received\n "
+                                        + "exit - exit the program";
 
     /*
      * This code creates a socket connection to a server at localhost on port 12345, and then creates input and output streams for communication. 
@@ -22,12 +33,20 @@ public class Tintolmarket {
             // iniciar streams
             in = new ObjectInputStream(clientSocket.getInputStream());
             out = new ObjectOutputStream(clientSocket.getOutputStream());
+            sc = new Scanner(System.in);
 
-            clientLogin();
+            if(clientLogin()) {
+                System.out.println("Login successful\n");
+                clientInteraction();
+            } else {
+                System.out.println("Login failed\n");
+            }
 
             // fechar streams
             in.close();
             out.close();
+            sc.close();
+            clientSocket.close();
         } catch (Exception e) {
             System.err.println("Erro");
         }
@@ -40,10 +59,8 @@ public class Tintolmarket {
      * It then writes the username and password to an output stream, and reads a boolean value from an input stream. 
      * If an exception is thrown, it prints the stack trace.
      */
-    private static void clientLogin() {
+    private static boolean clientLogin() {
         try {
-            Scanner sc = new Scanner(System.in);
-
             System.out.print("Insert username:");
             String user = sc.nextLine();
 
@@ -53,15 +70,85 @@ public class Tintolmarket {
             out.writeObject(user);
             out.writeObject(pass);
 
-            String answer = (String) in.readObject();
-            System.out.println(answer);
+            boolean login = (boolean) in.readObject();
+            
+            return login;
             
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
     private static void clientInteraction() {
-       // TODO
-    } 
+       try {
+            System.out.println(HELP);
+            
+            String input = sc.nextLine();
+            String[] inputArray = input.split(" ");
+
+            while(!inputArray[0].equals("exit")) {
+                
+                if (inputArray[0].equals("add") || inputArray[0].equals("a")){
+                    out.writeObject(inputArray[0]);
+                    out.writeObject(inputArray[1]);
+                    out.writeObject(inputArray[2]);
+                    if ((boolean) in.readObject()){
+                        System.out.println("Wine added successfully");
+                    }
+                    else{
+                        System.out.println("Wine already exists");
+                    }
+                }
+                else if (inputArray[0].equals("sell") || inputArray[0].equals("s")){
+                    out.writeObject(inputArray[0]);
+                    out.writeObject(inputArray[1]);
+                    out.writeObject(inputArray[2]);
+                    out.writeObject(inputArray[3]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("view") || inputArray[0].equals("v")){
+                    out.writeObject(inputArray[0]);
+                    out.writeObject(inputArray[1]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("buy") || inputArray[0].equals("b")){
+                    out.writeObject(inputArray[0]);
+                    out.writeObject(inputArray[1]);
+                    out.writeObject(inputArray[2]);
+                    out.writeObject(inputArray[3]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("wallet") || inputArray[0].equals("w")){
+                    out.writeObject(inputArray[0]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("classify") || inputArray[0].equals("c")){
+                    out.writeObject(inputArray[0]);
+                    out.writeObject(inputArray[1]);
+                    out.writeObject(inputArray[2]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("talk") || inputArray[0].equals("t")){
+                    out.writeObject(inputArray[0]);
+                    out.writeObject(inputArray[1]);
+                    out.writeObject(inputArray[2]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("read") || inputArray[0].equals("r")){
+                    out.writeObject(inputArray[0]);
+                    System.out.println(in.readObject());
+                }
+                else if (inputArray[0].equals("help") || inputArray[0].equals("h")){
+                    System.out.println(HELP);
+                }
+                else {
+                    System.out.println("Invalid command. Type 'help' for a list of commands.");
+                }
+            }
+            sc.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
