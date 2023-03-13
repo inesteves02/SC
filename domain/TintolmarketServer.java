@@ -125,17 +125,21 @@ public class TintolmarketServer {
 					System.out.println("User not found! Creating new user...");
 					fileWriterH.addUser(username, password);
 					userCatalog.addUser(username);
+					user = userCatalog.getUser(username);
+				} else {
+					user = userCatalog.getUser(username);
 				}
 
 				System.out.println("Login successful!");
 				outStream.writeObject(true);
 
-				user = new User(username);
-
 				//create user folder and its files with their default values
 				fileWriterH.createUserFolderAndFiles(user);
 
 				userInteraction();
+				socket.close();
+				outStream.close();
+				inStream.close();
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -151,7 +155,8 @@ public class TintolmarketServer {
 			try {
 				userInput = (String) inStream.readObject();
 			} catch (Exception e) {
-				e.printStackTrace();
+				System.err.println("Error reading user input! Disconnecting...");
+				return;
 			}
 
 			String userInputArray [] = userInput.split(" ");
@@ -164,7 +169,7 @@ public class TintolmarketServer {
 
 					if (!user.haveWine(wineName)){
 	
-						Wine wine = new Wine(wineName, wineImage, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING, DEFAULT_IS_FOR_SALE);
+						Wine wine = new Wine(wineName, wineImage, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING, user.getName(),DEFAULT_IS_FOR_SALE);
 						fileWriterH.addWineToUser(user, wine);
 						userCatalog.getUser(user.getName()).addWine(wine);
 						outStream.writeObject(true);
@@ -177,7 +182,42 @@ public class TintolmarketServer {
 					e.printStackTrace();
 				}
 
+			} else if (userInputArray[0].equals("sell") || userInputArray[0].equals("s") && userInputArray.length == 4 ){
+
+				try {
+
+					String wineName = (String) inStream.readObject();
+					int value = (int) inStream.readObject();
+					int quantity = (int) inStream.readObject();
+
+					if (user.haveWine(wineName)){
+						Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
+						wine.setPrice(value);
+						wine.setQuantity(quantity);
+						wine.setIsForSale(true);
+						outStream.writeObject(true);
+					} else {
+						outStream.writeObject(false);
+					}
+				} catch (ClassNotFoundException | IOException e) {
+					e.printStackTrace();
+				}
+			} else if (userInputArray[0].equals("view") || userInputArray[0].equals("v") && userInputArray.length == 2 ){
+				//TODO
+			} else if (userInputArray[0].equals("buy") || userInputArray[0].equals("b") && userInputArray.length == 4 ){
+				//TODO
+			} else if (userInputArray[0].equals("wallet") || userInputArray[0].equals("w") && userInputArray.length == 1 ){
+				//TODO
+			} else if (userInputArray[0].equals("classify") || userInputArray[0].equals("c") && userInputArray.length == 3 ){
+				//TODO
+			} else if (userInputArray[0].equals("talk") || userInputArray[0].equals("t") && userInputArray.length == 3 ){
+				//TODO
+			} else if (userInputArray[0].equals("read") || userInputArray[0].equals("r") && userInputArray.length == 1 ){
+				//TODO
+			} else if (userInputArray[0].equals("exit")){
+				return;
 			}
+			userInteraction();
 		}
 	}
 

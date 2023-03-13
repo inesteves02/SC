@@ -1,6 +1,8 @@
 package domain;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserCatalog {
     
@@ -16,5 +18,12 @@ public class UserCatalog {
 
     public void addUser(String name) {
         users.put(name, new User(name, 200, new HashMap<String, Wine>()));
+    }
+
+    public List<Wine> viewWine(String wineName) {
+        return users.entrySet().stream()
+            .filter(user -> user.getValue().haveWine(wineName))
+            .map(user -> user.getValue().getWines().get(wineName))
+            .collect(Collectors.toList());
     }
 }

@@ -75,6 +75,7 @@ public class Tintolmarket {
             return login;
             
         } catch (Exception e) {
+            System.err.println("Error.\n");
             e.printStackTrace();
             return false;
         }
@@ -86,7 +87,7 @@ public class Tintolmarket {
             
             String input = sc.nextLine();
             String[] inputArray = input.split(" ");
-
+            
             while(!inputArray[0].equals("exit")) {
                 
                 if (inputArray[0].equals("add") || inputArray[0].equals("a")){
@@ -145,10 +146,13 @@ public class Tintolmarket {
                 else {
                     System.out.println("Invalid command. Type 'help' for a list of commands.");
                 }
+                input = sc.nextLine();
+                inputArray = input.split(" ");
             }
+            out.writeObject(inputArray[0]);
             sc.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error. Disconnecting...");
         }
     }
 }

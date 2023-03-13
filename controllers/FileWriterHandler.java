@@ -80,7 +80,7 @@ public class FileWriterHandler {
         if (!file.exists()) {
             file.mkdir();
 
-            String path = USER_DATA_FOLDER + "/" + user + "/";
+            String path = USER_DATA_FOLDER + "/" + user.getName() + "/";
 
             File userFile = new File(path, USER_FILE);
             File wineFile = new File(path, WINE_FILE);
@@ -99,7 +99,7 @@ public class FileWriterHandler {
                 FileWriter fw = new FileWriter(path + USER_FILE);
                 BufferedWriter bw = new BufferedWriter(fw);
 
-                bw.write("Balance: " + user.getBalance());
+                bw.write(Double.toString(user.getBalance()));
                 bw.newLine();
                 bw.close();
                 fw.close();

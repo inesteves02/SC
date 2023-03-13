@@ -2,6 +2,7 @@ package domain;
 
 public class Wine {
 
+    private String sellerName;
     private String name;
     private String image;
     private double price;
@@ -9,12 +10,13 @@ public class Wine {
     private double rating;
     private boolean isForSale;
 
-    public Wine(String name, String image, double price, int quantity, double rating, boolean isForSale) {
+    public Wine(String name, String image, double price, int quantity, double rating, String sellerName, boolean isForSale) {
         this.name = name;
         this.image = image;
         this.rating = rating;
         this.quantity = quantity;
         this.price = price;
+        this.sellerName = sellerName;
         this.isForSale = isForSale;
     }
 
@@ -38,7 +40,23 @@ public class Wine {
         return rating;
     }
 
+    public String getSellerName() {
+        return sellerName;
+    }
+
     public boolean isForSale() {
         return isForSale;
+    }
+
+    public void setPrice(int value) {
+        price = value;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setIsForSale(boolean b) {
+        isForSale = b;
     }
 }

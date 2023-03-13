@@ -28,16 +28,63 @@ public class FileReaderHandler {
             File[] folders = folder.listFiles(); // Lista todos as pastas da pasta user_data
             for (File f : folders) {
                 if (f.isDirectory()) {
-                    File[] files2 = f.listFiles(); // Lista todos os arquivos da pasta do usuário
 
-                    //Busca o valor do arquivo User.txt
+                    File[] files2 = f.listFiles(); // Lista todos os arquivos da pasta do usuário
+                    String balance = null;
+                    HashMap<String, Wine> wines = new HashMap<String, Wine>();
+
+                    for (File file : files2) {
+
+                        try {
+                            // Verifica se o arquivo é o User.txt
+                            if (file.getName().equals(USER_FILE)) {
+
+                                // Lê o balance do user no arquivo User.txt    
+                                BufferedReader reader = new BufferedReader(new FileReader(file));
+                                String line;
+                                    
+                                while ((line = reader.readLine()) != null) {
+                                    balance = line;
+                                }
+
+                                reader.close();
+                            }
+                            
+                            if (file.getName().equals(WINE_FILE)){
+
+                                //Cria um objeto Wine com o nome do vinho
+                                BufferedReader reader = new BufferedReader(new FileReader(file));
+                                String line;
+
+                                while ((line = reader.readLine()) != null) {
+                                    String[] parts = line.split(":");
+                                    Wine wine = new Wine(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3]), Double.parseDouble(parts[4]), file.getName(), Boolean.parseBoolean(parts[5]));
+                                    wines.put(parts[0], wine);
+                                }
+
+                                reader.close();
+                            }
+                            
+                            if (file.getName().equals(MESSAGE_FILE)){
+                                //TODO
+                            }
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                     
                     // Cria um objeto User com o nome do usuário
-                    User user = new User(f.getName(), );
+                    User user = new User(f.getName(), Double.parseDouble(balance), wines);
+                    users.put(f.getName(), user);
                 }
             }
+            return users;
+        } else {
+            System.out.println("A pasta user_data não existe!");
+            return null;
         }
-
     }
     /*
      * This code reads the LOGIN_FILE file and checks if the username and password match. 

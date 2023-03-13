@@ -8,19 +8,17 @@ public class User {
     private double balance;
     private HashMap<String, Wine> wines;
 
-    // Construtor para criar um novo utilizador
+    // Constructor to create a new user
     public User(String name) {
-        this.name = name;
-        this.balance = 200;
-        this.wines = new HashMap<>();
+        this(name, 200, new HashMap<>());
     }
 
-    // Construtor para criar um utilizador a partir de um ficheiro
+    // Constructor to create a user from a file 
     public User(String name, double balance, HashMap<String, Wine> wines) {
         this.name = name;
         this.balance = balance;
         this.wines = wines;
-    }
+    } 
 
     public String getName() {
         return name;
@@ -28,6 +26,10 @@ public class User {
 
     public double getBalance() {
         return balance;
+    }
+
+    public Wine getWine(String name) {
+        return wines.get(name);
     }
 
     public HashMap<String, Wine> getWines() {
