@@ -11,13 +11,14 @@ import java.net.Socket;
 
 public class TintolmarketServer {
 
-	private static FileReaderHandler fileReaderH;
-	private static FileWriterHandler fileWriterH;
-	private static UserCatalog userCatalog;
-	private static final int DEFAULT_PRICE = 0;
-	private static final int DEFAULT_BALANCE = 200;
-	private static final int DEFAULT_QUANTITY = 0;
-	private static final double DEFAULT_RATING = 0;
+	private static FileReaderHandler fileReaderH;  // Declare FileReaderHandler object 
+	private static FileWriterHandler fileWriterH; // Declare FileWriterHandler object 
+	private static UserCatalog userCatalog; // Declare UserCatalog object 
+
+	// Declare constants for default values of wine attributes 
+	private static final int DEFAULT_PRICE = 0; 
+	private static final int DEFAULT_QUANTITY = 0; 
+	private static final double DEFAULT_RATING = 0; 
 	private static final boolean DEFAULT_IS_FOR_SALE = false;
     
 	/*
