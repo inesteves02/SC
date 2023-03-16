@@ -26,4 +26,8 @@ public class UserCatalog {
             .map(user -> user.getValue().getWines().get(wineName))
             .collect(Collectors.toList());
     }
+
+    public HashMap<String, User> getUsers() {
+        return users;
+    }
 }

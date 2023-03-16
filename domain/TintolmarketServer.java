@@ -8,12 +8,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
 
 public class TintolmarketServer {
 
 	private static FileReaderHandler fileReaderH;  // Declare FileReaderHandler object 
 	private static FileWriterHandler fileWriterH; // Declare FileWriterHandler object 
-	private static UserCatalog userCatalog; // Declare UserCatalog object 
+	private static UserCatalog userCatalog; // Declare UserCatalog object
+	private static WineCatalog wineCatalog; // Declare WineCatalog object 
 
 	// Declare constants for default values of wine attributes 
 	private static final int DEFAULT_PRICE = 0; 
@@ -44,7 +46,9 @@ public class TintolmarketServer {
 
 		fileReaderH = new FileReaderHandler(); 
 
-		userCatalog = new UserCatalog(fileReaderH.readUsers()); 
+		userCatalog = new UserCatalog(fileReaderH.readUsers());
+		
+		wineCatalog = new WineCatalog(userCatalog);
 
     } 
 
@@ -149,7 +153,7 @@ public class TintolmarketServer {
 			}
 		}
 
-		private void userInteraction() {
+		private void userInteraction() throws IOException{
 
 			String userInput = "";
 
@@ -188,14 +192,19 @@ public class TintolmarketServer {
 				try {
 
 					String wineName = (String) inStream.readObject();
-					int value = (int) inStream.readObject();
-					int quantity = (int) inStream.readObject();
+					double value =  Double.parseDouble((String) inStream.readObject());
+					int quantity = Integer.parseInt((String) inStream.readObject());
 
 					if (user.haveWine(wineName)){
+
 						Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
 						wine.setPrice(value);
 						wine.setQuantity(quantity);
 						wine.setIsForSale(true);
+
+						fileWriterH.updateWine(user, wine);
+						wineCatalog.addWine(wine);
+
 						outStream.writeObject(true);
 					} else {
 						outStream.writeObject(false);
@@ -204,7 +213,21 @@ public class TintolmarketServer {
 					e.printStackTrace();
 				}
 			} else if (userInputArray[0].equals("view") || userInputArray[0].equals("v") && userInputArray.length == 2 ){
-				//TODO
+				
+				try {
+					String wineName = (String) inStream.readObject();
+					List<Wine> wines = wineCatalog.getWines(wineName);
+					StringBuilder sb = new StringBuilder();
+	
+					for (Wine wine : wines){
+						sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + "Euros, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ",Imagem: " + wine.getImage() + "\n");
+					}
+
+					outStream.writeObject(sb.toString());
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+
 			} else if (userInputArray[0].equals("buy") || userInputArray[0].equals("b") && userInputArray.length == 4 ){
 				//TODO
 			} else if (userInputArray[0].equals("wallet") || userInputArray[0].equals("w") && userInputArray.length == 1 ){

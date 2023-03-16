@@ -102,16 +102,25 @@ public class Tintolmarket {
                     }
                 }
                 else if (inputArray[0].equals("sell") || inputArray[0].equals("s")){
+
                     out.writeObject(inputArray[0]);
                     out.writeObject(inputArray[1]);
                     out.writeObject(inputArray[2]);
                     out.writeObject(inputArray[3]);
-                    System.out.println(in.readObject());
+
+                    if ((boolean) in.readObject()){
+                        System.out.println("Wine to sell added successfully");
+                    }
+                    else{
+                        System.out.println("Wine not added to sell");
+                    }
                 }
                 else if (inputArray[0].equals("view") || inputArray[0].equals("v")){
+
                     out.writeObject(inputArray[0]);
                     out.writeObject(inputArray[1]);
-                    System.out.println(in.readObject());
+
+                    System.out.println((String) in.readObject());
                 }
                 else if (inputArray[0].equals("buy") || inputArray[0].equals("b")){
                     out.writeObject(inputArray[0]);

@@ -1,12 +1,34 @@
 package domain;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class WineCatalog {
     
-    private HashMap<String, Wine> wines;
+    private List<Wine> wines;
 
-    public WineCatalog() {
-        this.wines = new HashMap<String, Wine>();
+    public WineCatalog(UserCatalog userCatalog) {
+
+        wines = new ArrayList<Wine>();
+        
+        //Encontra todos os vinhos dos usuários e os adiciona ao hashmap
+        for (User user : userCatalog.getUsers().values()) {
+            for (Wine wine : user.getWines().values()) {
+                if (wine.isForSale())
+                    wines.add(wine);
+            }
+        }
+    }
+
+    public void addWine(Wine wine) {
+        wines.add(wine);
+    }
+
+    public List<Wine> getWines(String name) {
+
+        return this.wines.stream()
+                    .filter(wine -> wine.getName().equals(name))
+                    .collect(Collectors.toList());
     }
 }

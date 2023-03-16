@@ -3,9 +3,13 @@ package controllers;
 import domain.User;
 import domain.Wine;
 import java.io.FileWriter;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileWriterHandler {
 
@@ -36,8 +40,8 @@ public class FileWriterHandler {
 
         // escreve as informações do vinho no arquivo
         try {
-            FileWriter writer = new FileWriter(wineFile);
-            writer.write(wine.getName() + ":" + wine.getImage() + ":" + wine.getPrice() + ":" + wine.getQuantity() + ":" + wine.getRating() + ":" + wine.isForSale() + "\n");
+            FileWriter writer = new FileWriter(wineFile,true);
+            writer.write(wine.getName() + ":" + wine.getImage() + ":" + wine.getPrice() + ":" + wine.getQuantity() + ":" + wine.getRating() + ":" + user.getName() + ":" + wine.isForSale() + "\n");
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -107,5 +111,34 @@ public class FileWriterHandler {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void updateWine(User user, Wine wine) throws IOException {
+
+        File file = new File(USER_DATA_FOLDER + "/" + user.getName() + "/" + WINE_FILE);
+
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        List<String> wines = new ArrayList<>();
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            wines.add(line);
+        }
+
+        boolean guard = false;
+        for (int i = 0; i < wines.size() && !guard; i++) {
+            String[] wineData = wines.get(i).split(":");
+            if (wineData[0].equals(wine.getName())) {
+                wines.set(i, wine.getName() + ":" + wine.getImage() + ":" + wine.getPrice() + ":" + wine.getQuantity() + ":" + wine.getRating() + ":" + user.getName() + ":" + wine.isForSale());
+                guard = true;
+            }
+        }
+        reader.close();
+
+        FileWriter writer = new FileWriter(file);
+        for (String wineString : wines) {
+            writer.write(wineString + "\n");
+        }
+        writer.close();
     }
 }

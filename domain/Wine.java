@@ -48,7 +48,7 @@ public class Wine {
         return isForSale;
     }
 
-    public void setPrice(int value) {
+    public void setPrice(double value) {
         price = value;
     }
 
