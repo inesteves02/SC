@@ -11,15 +11,15 @@ public class Tintolmarket {
     private static ObjectOutputStream out;
     private static Scanner sc;
     private static final String HELP =    "Options available:\n" 
-                                        + "add <wine> <image> - add a new wine to the catalog\n "
-                                        + "sell <wine> <value> <quantity> - sell a wine from the catalog\n "
-                                        + "view <wine> - view the details of a wine\n "
-                                        + "buy <wine> <seller> <quantity> - buy a wine from the catalog\n "
-                                        + "wallet - view the current balance of the wallet\n "
-                                        + "classify <wine> <stars> - classify a wine\n "
-                                        + "talk <user> <message> - send a message to another user\n "
-                                        + "read - read the messages received\n "
-                                        + "exit - exit the program";
+                                        + "\tadd <wine> <image> - add a new wine to the catalog\n "
+                                        + "\tsell <wine> <value> <quantity> - sell a wine from the catalog\n "
+                                        + "\tview <wine> - view the details of a wine\n "
+                                        + "\tbuy <wine> <seller> <quantity> - buy a wine from the catalog\n "
+                                        + "\twallet - view the current balance of the wallet\n "
+                                        + "\tclassify <wine> <stars> - classify a wine\n "
+                                        + "\ttalk <user> <message> - send a message to another user\n "
+                                        + "\tread - read the messages received\n "
+                                        + "\texit - exit the program\n";
 
     /*
      * This code creates a socket connection to a server at localhost on port 12345, and then creates input and output streams for communication. 
