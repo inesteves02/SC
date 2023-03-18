@@ -17,78 +17,73 @@ public class FileReaderHandler {
     private final String WINE_FILE = "Wine.txt";
     private final String MESSAGE_FILE = "Message.txt";
 
-    //Ler todos os usuarios e os seus respetivos vinhos e criar um hashmap com os mesmos
     public HashMap<String, User> readUsers() {
-
         HashMap<String, User> users = new HashMap<>();
 
+        // get all folders from user_data directory
         File folder = new File(USER_DATA_FOLDER);
 
-        if (folder.isDirectory()) { // Verifica a existência da pasta user_data
-            File[] folders = folder.listFiles(); // Lista todos as pastas da pasta user_data
+        if (folder.isDirectory()) {
+            File[] folders = folder.listFiles();
+
+            // loop through all user folders and read user data
             for (File f : folders) {
                 if (f.isDirectory()) {
+                    String balance = readBalanceFromFile(f.getAbsolutePath() + "/" + USER_FILE);
 
-                    File[] files2 = f.listFiles(); // Lista todos os arquivos da pasta do usuário
-                    String balance = null;
-                    HashMap<String, Wine> wines = new HashMap<String, Wine>();
+                    HashMap<String, Wine> wines = readWinesFromFile(f.getAbsolutePath() + "/" + WINE_FILE);
 
-                    for (File file : files2) {
-
-                        try {
-                            // Verifica se o arquivo é o User.txt
-                            if (file.getName().equals(USER_FILE)) {
-
-                                // Lê o balance do user no arquivo User.txt    
-                                BufferedReader reader = new BufferedReader(new FileReader(file));
-                                String line;
-                                    
-                                while ((line = reader.readLine()) != null) {
-                                    balance = line;
-                                }
-
-                                reader.close();
-                            }
-                            
-                            if (file.getName().equals(WINE_FILE)){
-
-                                //Cria um objeto Wine com o nome do vinho
-                                BufferedReader reader = new BufferedReader(new FileReader(file));
-                                String line;
-
-                                while ((line = reader.readLine()) != null) {
-                                    String[] parts = line.split(":");
-                                    Wine wine = new Wine(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3]), Double.parseDouble(parts[4]), f.getName(), Boolean.parseBoolean(parts[5]));
-                                    wines.put(parts[0], wine);
-                                }
-
-                                reader.close();
-                            }
-                            
-                            if (file.getName().equals(MESSAGE_FILE)){
-                                //TODO
-                            }
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    
-                    // Cria um objeto User com o nome do usuário
+                    // create user object and add to HashMap
                     User user = new User(f.getName(), Double.parseDouble(balance), wines);
                     users.put(f.getName(), user);
                 }
             }
+
             return users;
         } else {
             System.out.println("A pasta user_data não existe!");
             return null;
         }
     }
+
+    private String readBalanceFromFile(String filepath) {
+        String balance = null;
+        try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                balance = line;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return balance;
+    }
+
     /*
-     * This code reads the LOGIN_FILE file and checks if the username and password match. 
-     * It takes two parameters: a username (String user) and a password (String pass).
+     * Read wine data from file
+     */
+    private HashMap<String, Wine> readWinesFromFile(String filepath) {
+        HashMap<String, Wine> wines = new HashMap<>();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filepath));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(":");
+                Wine wine = new Wine(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3]),
+                        Double.parseDouble(parts[4]), filepath, Boolean.parseBoolean(parts[5]));
+                wines.put(parts[0], wine);
+            }
+
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return wines;
+    }
+
+    /*
+     * Check if the username and password match by reading the LOGIN_FILE file
      */
     public int clientLogin(String user, String pass) {
         File file = new File(LOGIN_FILE);
