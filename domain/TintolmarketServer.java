@@ -220,14 +220,13 @@ public class TintolmarketServer {
 			try {
 				String wineName = (String) inStream.readObject();
 				String wineImage = (String) inStream.readObject();
-		
+
+				//if the wine doesn't already exists, then we add it to the catalog
 				if (!user.haveWine(wineName)) {
-		
 					Wine wine = new Wine(wineName, wineImage, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING, user.getName(), DEFAULT_IS_FOR_SALE);
 					fileWriterH.addWineToUser(user, wine);
 					userCatalog.getUser(user.getName()).addWine(wine);
 					outStream.writeObject(true);
-		
 				} else {
 					outStream.writeObject(false);
 				}
@@ -241,7 +240,8 @@ public class TintolmarketServer {
 				String wineName = (String) inStream.readObject();
 				double value = Double.parseDouble((String) inStream.readObject());
 				int quantity = Integer.parseInt((String) inStream.readObject());
-		
+
+				//to sell a wine, it has to be present in the user catalog
 				if (user.haveWine(wineName)) {
 		
 					Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
@@ -250,6 +250,7 @@ public class TintolmarketServer {
 					wine.setIsForSale(true);
 		
 					fileWriterH.updateWine(user, wine);
+					//acho que aqui tem q haver um if(ñ existir ja no wineCatalog)
 					wineCatalog.addWine(wine);
 		
 					outStream.writeObject(true);
