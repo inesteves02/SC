@@ -71,7 +71,7 @@ public class FileReaderHandler {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
                 Wine wine = new Wine(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3]),
-                        Double.parseDouble(parts[4]), filepath, Boolean.parseBoolean(parts[5]));
+                        Double.parseDouble(parts[4]), parts[5], Boolean.parseBoolean(parts[6]));
                 wines.put(parts[0], wine);
             }
 
