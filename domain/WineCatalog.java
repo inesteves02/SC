@@ -26,18 +26,16 @@ public class WineCatalog {
     }
 
     public List<Wine> getWines(String name) {
-
         return this.wines.stream()
                     .filter(wine -> wine.getName().equals(name))
                     .collect(Collectors.toList());
     }
 
     public void updateWine (Wine wine) {
-        for (int i = 0; i < wines.size(); i++) {
-            if (wines.get(i).getName().equals(wine.getName())) {
-                wines.set(i, wine);
-                return;
+        wines.forEach(w -> {
+            if(w.getName().equals(wine.getName())) {
+                wines.set(wines.indexOf(w), wine);
             }
-        }
+        });
     }
 }
