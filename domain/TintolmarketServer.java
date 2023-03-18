@@ -164,148 +164,212 @@ public class TintolmarketServer {
 				return;
 			}
 
-			String userInputArray [] = userInput.split(" ");
+			switch (userInput) {
+				case "add":
+				case "a":
+					addWine();
+					break;
 
-			if (userInputArray[0].equals("add") || userInputArray[0].equals("a") && userInputArray.length == 3){
+				case "sell":
+				case "s":
+					sellWine();
+					break;
 
-				try {
-					String wineName = (String) inStream.readObject();
-					String wineImage = (String) inStream.readObject();
+				case "view":
+				case "v":
+					viewWines();
+					break;
 
-					if (!user.haveWine(wineName)){
-	
-						Wine wine = new Wine(wineName, wineImage, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING, user.getName(),DEFAULT_IS_FOR_SALE);
-						fileWriterH.addWineToUser(user, wine);
-						userCatalog.getUser(user.getName()).addWine(wine);
-						outStream.writeObject(true);
-						
-					} else {
-						outStream.writeObject(false);
-					}
+				case "buy":
+				case "b":
+					buyWine();
+					break;
 
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
+				case "wallet":
+				case "w":
+					outStream.writeObject(user.getBalance());
+					break;
 
-			} else if (userInputArray[0].equals("sell") || userInputArray[0].equals("s") && userInputArray.length == 4 ){
+				case "classify":
+				case "c":
+					classifyWine();
+					break;
 
-				try {
+				case "talk":
+				case "t":
+					// TODO
+					break;
 
-					String wineName = (String) inStream.readObject();
-					double value =  Double.parseDouble((String) inStream.readObject());
-					int quantity = Integer.parseInt((String) inStream.readObject());
+				case "read":
+				case "r":
+					// TODO
+					break;
 
-					if (user.haveWine(wineName)){
+				case "exit":
+					return;
 
-						Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
-						wine.setPrice(value);
-						wine.setQuantity(quantity);
-						wine.setIsForSale(true);
-
-						fileWriterH.updateWine(user, wine);
-						wineCatalog.addWine(wine);
-
-						outStream.writeObject(true);
-					} else {
-						outStream.writeObject(false);
-					}
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
-			} else if (userInputArray[0].equals("view") || userInputArray[0].equals("v") && userInputArray.length == 2 ){
-				
-				try {
-					String wineName = (String) inStream.readObject();
-					List<Wine> wines = wineCatalog.getWines(wineName);
-					StringBuilder sb = new StringBuilder();
-	
-					for (Wine wine : wines){
-						sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + "Euros, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ", Imagem: " + wine.getImage() + "\n");
-					}
-
-					outStream.writeObject(sb.toString());
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-
-			} else if (userInputArray[0].equals("buy") || userInputArray[0].equals("b") && userInputArray.length == 4 ){
-				
-				try {
-					String wineName = (String) inStream.readObject();
-					String sellerName = (String) inStream.readObject();
-					int quantity = Integer.parseInt((String) inStream.readObject());
-
-					if (userCatalog.getUser(sellerName).haveWine(wineName)){
-
-						Wine wine = userCatalog.getUser(sellerName).getWine(wineName);
-
-						if (wine.getQuantity() < quantity){
-							outStream.writeObject(false);
-							return;
-						}
-
-						if (user.getBalance() < wine.getPrice() * quantity){
-							outStream.writeObject(false);
-							return;
-						}
-
-						wine.setQuantity(wine.getQuantity() - quantity); // update quantity
-						wineCatalog.updateWine(wine); // update wine catalog
-						userCatalog.getUser(sellerName).setBalance(userCatalog.getUser(sellerName).getBalance() + wine.getPrice() * quantity); // update seller balance
-						user.setBalance(user.getBalance() - wine.getPrice() * quantity); // update buyer balance
-
-						fileWriterH.updateWine(userCatalog.getUser(sellerName), wine); // update seller wine file
-						fileWriterH.updateUserBalance(userCatalog.getUser(sellerName)); // update seller balance file
-						fileWriterH.updateUserBalance(user); // update buyer balance file
-
-						outStream.writeObject(true);
-					} else {
-						outStream.writeObject(false);
-					}
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
-			} else if (userInputArray[0].equals("wallet") || userInputArray[0].equals("w") && userInputArray.length == 1 ){
-
-				outStream.writeObject(user.getBalance());
-
-			} else if (userInputArray[0].equals("classify") || userInputArray[0].equals("c") && userInputArray.length == 3 ){
-				
-				try {
-					String wineName = (String) inStream.readObject();
-					int rating = Integer.parseInt((String) inStream.readObject());
-
-					if (rating < 1 || rating > 5){
-						outStream.writeObject(false);
-						return;
-					}
-
-					if (user.haveWine(wineName)){
-
-						Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
-						wine.setRating(rating);
-
-						fileWriterH.updateWine(user, wine);
-						wineCatalog.updateWine(wine);
-
-						outStream.writeObject(true);
-					} else {
-						outStream.writeObject(false);
-					}
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-				}
-
-			} else if (userInputArray[0].equals("talk") || userInputArray[0].equals("t") && userInputArray.length == 3 ){
-				//TODO
-			} else if (userInputArray[0].equals("read") || userInputArray[0].equals("r") && userInputArray.length == 1 ){
-				//TODO
-			} else if (userInputArray[0].equals("exit")){
-				return;
-			} else {
-				System.out.println("Invalid command!");
+				default:
+					System.out.println("Invalid command!");
+					break;
 			}
+
 			userInteraction();
+		}
+
+		private void addWine() {
+			try {
+				String wineName = (String) inStream.readObject();
+				String wineImage = (String) inStream.readObject();
+		
+				if (!user.haveWine(wineName)) {
+		
+					Wine wine = new Wine(wineName, wineImage, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING, user.getName(), DEFAULT_IS_FOR_SALE);
+					fileWriterH.addWineToUser(user, wine);
+					userCatalog.getUser(user.getName()).addWine(wine);
+					outStream.writeObject(true);
+		
+				} else {
+					outStream.writeObject(false);
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private void sellWine() {
+			try {
+				String wineName = (String) inStream.readObject();
+				double value = Double.parseDouble((String) inStream.readObject());
+				int quantity = Integer.parseInt((String) inStream.readObject());
+		
+				if (user.haveWine(wineName)) {
+		
+					Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
+					wine.setPrice(value);
+					wine.setQuantity(quantity);
+					wine.setIsForSale(true);
+		
+					fileWriterH.updateWine(user, wine);
+					wineCatalog.addWine(wine);
+		
+					outStream.writeObject(true);
+				} else {
+					outStream.writeObject(false);
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private String buildViewResponse(List<Wine> wines) {
+			StringBuilder sb = new StringBuilder();
+		
+			for (Wine wine : wines) {
+				sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + "\u20AC, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ", Imagem: " + wine.getImage() + "\n");
+			}
+		
+			return sb.toString();
+		}
+
+		private void viewWines() {
+			try {
+				String wineName = (String) inStream.readObject();
+				List<Wine> wines = wineCatalog.getWines(wineName);
+				String response = buildViewResponse(wines);
+				outStream.writeObject(response);
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private void buyWine() {
+			try {
+				String wineName = (String) inStream.readObject();
+				String sellerName = (String) inStream.readObject();
+				int quantity = Integer.parseInt((String) inStream.readObject());
+		
+				if (isValidBuyInput(wineName, sellerName, quantity)) {
+		
+					Wine wine = userCatalog.getUser(sellerName).getWine(wineName);
+		
+					wine.setQuantity(wine.getQuantity() - quantity); // update quantity
+					wineCatalog.updateWine(wine); // update wine catalog
+					userCatalog.getUser(sellerName).setBalance(userCatalog.getUser(sellerName).getBalance() + wine.getPrice() * quantity); // update seller balance
+					user.setBalance(user.getBalance() - wine.getPrice() * quantity); // update buyer balance
+		
+					fileWriterH.updateWine(userCatalog.getUser(sellerName), wine); // update seller wine file
+					fileWriterH.updateUserBalance(userCatalog.getUser(sellerName)); // update seller balance file
+					fileWriterH.updateUserBalance(user); // update buyer balance file
+		
+					outStream.writeObject(true);
+				} else {
+					outStream.writeObject(false);
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private boolean isValidBuyInput(String wineName, String sellerName, int quantity) {
+			try{
+				if (!userCatalog.getUser(sellerName).haveWine(wineName)) {
+					outStream.writeObject(false);
+					return false;
+				}
+			
+				Wine wine = userCatalog.getUser(sellerName).getWine(wineName);
+			
+				if (wine.getQuantity() < quantity) {
+					outStream.writeObject(false);
+					return false;
+				}
+			
+				if (user.getBalance() < wine.getPrice() * quantity) {
+					outStream.writeObject(false);
+					return false;
+				}
+			
+				return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+
+		private void classifyWine() {
+			try {
+				String wineName = (String) inStream.readObject();
+				int rating = Integer.parseInt((String) inStream.readObject());
+		
+				if (isValidRating(rating) && user.haveWine(wineName)) {
+		
+					Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
+					wine.setRating(rating);
+		
+					fileWriterH.updateWine(user, wine);
+					wineCatalog.updateWine(wine);
+		
+					outStream.writeObject(true);
+				} else {
+					outStream.writeObject(false);
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private boolean isValidRating(int rating) {
+			try {
+				if (rating < 1 || rating > 5) {
+					outStream.writeObject(false);
+					return false;
+				}
+		
+				return true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
 		}
 	}
 
