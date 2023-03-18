@@ -1,9 +1,9 @@
 package domain;
 
-import java.util.Scanner;
-import java.net.Socket;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.util.Scanner;
 
 public class Tintolmarket {
     
@@ -21,44 +21,31 @@ public class Tintolmarket {
                                         + "\tread - read the messages received\n "
                                         + "\texit - exit the program\n";
 
-    /*
-     * This code creates a socket connection to a server at localhost on port 12345, and then creates input and output streams for communication. 
-     * It then calls the clientLogin() method, and finally closes the input and output streams.
-     */
     public static void main(String[] args) {
         try {
-            // iniciar socket
             Socket clientSocket = new Socket("localhost", 12345);
 
-            // iniciar streams
             in = new ObjectInputStream(clientSocket.getInputStream());
             out = new ObjectOutputStream(clientSocket.getOutputStream());
             sc = new Scanner(System.in);
 
-            if(clientLogin()) {
+            if (clientLogin()) {
                 System.out.println("Login successful\n");
                 clientInteraction();
             } else {
                 System.out.println("Login failed\n");
             }
 
-            // fechar streams
             in.close();
             out.close();
             sc.close();
             clientSocket.close();
         } catch (Exception e) {
-            System.err.println("Erro");
+            System.err.println("Cannot connect to the server.");
         }
 
     }
 
-    /*
-     * This code is used to log in a client. 
-     * It creates a Scanner object to get the username and password from the user. 
-     * It then writes the username and password to an output stream, and reads a boolean value from an input stream. 
-     * If an exception is thrown, it prints the stack trace.
-     */
     private static boolean clientLogin() {
         try {
             System.out.print("Insert username:");
@@ -70,9 +57,7 @@ public class Tintolmarket {
             out.writeObject(user);
             out.writeObject(pass);
 
-            boolean login = (boolean) in.readObject();
-            
-            return login;
+            return (boolean) in.readObject();
             
         } catch (Exception e) {
             System.err.println("Error.\n");
@@ -85,100 +70,121 @@ public class Tintolmarket {
        try {
             System.out.println(HELP);
             
-            String input = sc.nextLine();
-            String[] inputArray = input.split(" ");
-            
-            while(!inputArray[0].equals("exit")) {
-                
-                if (inputArray[0].equals("add") || inputArray[0].equals("a")){
-                    out.writeObject(inputArray[0]);
-                    out.writeObject(inputArray[1]);
-                    out.writeObject(inputArray[2]);
-                    if ((boolean) in.readObject()){
-                        System.out.println("Wine added successfully");
-                    }
-                    else{
-                        System.out.println("Wine already exists");
-                    }
-                }
-                else if (inputArray[0].equals("sell") || inputArray[0].equals("s")){
-
-                    out.writeObject(inputArray[0]);
-                    out.writeObject(inputArray[1]);
-                    out.writeObject(inputArray[2]);
-                    out.writeObject(inputArray[3]);
-
-                    if ((boolean) in.readObject()){
-                        System.out.println("Wine to sell added successfully");
-                    }
-                    else{
-                        System.out.println("Wine not added to sell");
-                    }
-                }
-                else if (inputArray[0].equals("view") || inputArray[0].equals("v")){
-
-                    out.writeObject(inputArray[0]);
-                    out.writeObject(inputArray[1]);
-
-                    System.out.println((String) in.readObject());
-                }
-                else if (inputArray[0].equals("buy") || inputArray[0].equals("b")){
-
-                    out.writeObject(inputArray[0]);
-                    out.writeObject(inputArray[1]);
-                    out.writeObject(inputArray[2]);
-                    out.writeObject(inputArray[3]);
-
-                    if ((boolean) in.readObject()){
-                        System.out.println("Wine bought successfully");
-                    }
-                    else{
-                        System.out.println("Wine not bought");
-                    }
-                }
-                else if (inputArray[0].equals("wallet") || inputArray[0].equals("w")){
-
-                    out.writeObject(inputArray[0]);
-
-                    Double balance = (Double) in.readObject();
-                    System.out.println("Saldo Disponivel: "+ balance);
-                }
-                else if (inputArray[0].equals("classify") || inputArray[0].equals("c")){
-
-                    out.writeObject(inputArray[0]);
-                    out.writeObject(inputArray[1]);
-                    out.writeObject(inputArray[2]);
-
-                    if ((boolean) in.readObject()){
-                        System.out.println("Wine classified successfully");
-                    }
-                    else{
-                        System.out.println("Wine not classified");
-                    }
-                }
-                else if (inputArray[0].equals("talk") || inputArray[0].equals("t")){
-                    out.writeObject(inputArray[0]);
-                    out.writeObject(inputArray[1]);
-                    out.writeObject(inputArray[2]);
-                    System.out.println(in.readObject());
-                }
-                else if (inputArray[0].equals("read") || inputArray[0].equals("r")){
-                    out.writeObject(inputArray[0]);
-                    System.out.println(in.readObject());
-                }
-                else if (inputArray[0].equals("help") || inputArray[0].equals("h")){
-                    System.out.println(HELP);
-                }
-                else {
-                    System.out.println("Invalid command. Type 'help' for a list of commands.");
-                }
+            String input;
+            do {
                 input = sc.nextLine();
-                inputArray = input.split(" ");
-            }
-            out.writeObject(inputArray[0]);
+                String[] inputArray = input.split(" ");
+     
+                processCommands(inputArray);                
+                
+            } while(!input.equalsIgnoreCase("exit"));
+
+            out.writeObject(input);
             sc.close();
         } catch (Exception e) {
             System.err.println("Error. Disconnecting...");
+        }
+    }
+
+    private static void processCommands(String[] inputArray) throws Exception {
+                
+        switch(inputArray[0].toLowerCase()) {
+            case "add":
+            case "a":
+                out.writeObject(inputArray[0]);
+                out.writeObject(inputArray[1]);
+                out.writeObject(inputArray[2]);
+                
+                if ((boolean) in.readObject()) {
+                    System.out.println("Wine added successfully");
+                } else {
+                    System.out.println("Wine already exists");
+                }
+                break;
+
+            case "sell":
+            case "s":
+                out.writeObject(inputArray[0]);
+                out.writeObject(inputArray[1]);
+                out.writeObject(inputArray[2]);
+                out.writeObject(inputArray[3]);
+                
+                if ((boolean) in.readObject()) {
+                    System.out.println("Wine to sell added successfully");
+                } else {
+                    System.out.println("Wine not added to sell");
+                }
+                break;
+            
+            case "view":
+            case "v":
+                out.writeObject(inputArray[0]);
+                out.writeObject(inputArray[1]);
+
+                System.out.println((String) in.readObject());
+                break;
+
+            case "buy":
+            case "b":
+                out.writeObject(inputArray[0]);
+                out.writeObject(inputArray[1]);
+                out.writeObject(inputArray[2]);
+                out.writeObject(inputArray[3]);
+
+                if ((boolean) in.readObject()) {
+                    System.out.println("Wine bought successfully");
+                } else {
+                    System.out.println("Wine not bought");
+                }
+                break;
+
+            case "wallet":
+            case "w":
+                out.writeObject(inputArray[0]);
+
+                Double balance = (Double) in.readObject();
+                System.out.println("Saldo Disponivel: "+ balance);
+                break;
+
+            case "classify":
+            case "c":
+                out.writeObject(inputArray[0]);
+                out.writeObject(inputArray[1]);
+                out.writeObject(inputArray[2]);
+
+                if ((boolean) in.readObject()) {
+                    System.out.println("Wine classified successfully");
+                } else {
+                    System.out.println("Wine not classified");
+                }
+                break;
+
+            case "talk":
+            case "t":
+                out.writeObject(inputArray[0]);
+                out.writeObject(inputArray[1]);
+                out.writeObject(inputArray[2]);
+                System.out.println(in.readObject());
+                break;
+
+            case "read":
+            case "r":
+                out.writeObject(inputArray[0]);
+                Object messages = in.readObject();
+                if (messages == null) {
+                    System.out.println("No messages");
+                } else {
+                    System.out.println(messages);
+                }
+                break;
+
+            case "help":
+            case "h":
+                System.out.println(HELP);
+                break;
+
+            default:
+                System.out.println("Invalid command. Type 'help' for a list of commands.");
         }
     }
 }
