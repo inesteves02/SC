@@ -71,6 +71,7 @@ public class Tintolmarket {
             System.out.println(HELP);
             
             String input;
+            
             do {
                 input = sc.nextLine();
                 String[] inputArray = input.split(" ");
@@ -183,6 +184,10 @@ public class Tintolmarket {
                 System.out.println(HELP);
                 break;
 
+            case "exit":
+                out.writeObject(inputArray[0]);
+                break;
+                
             default:
                 System.out.println("Invalid command. Type 'help' for a list of commands.");
         }
