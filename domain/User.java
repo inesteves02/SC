@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 public class User {
     
-    private String name;
+    private final String name;
     private double balance;
     private HashMap<String, Wine> wines;
 
