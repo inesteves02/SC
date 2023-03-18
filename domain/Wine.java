@@ -8,6 +8,7 @@ public class Wine {
     private double price;
     private int quantity;
     private double rating;
+    private int ratingCount;
     private boolean isForSale;
 
     public Wine(String name, String image, double price, int quantity, double rating, String sellerName, boolean isForSale) {
@@ -17,6 +18,7 @@ public class Wine {
         this.quantity = quantity;
         this.price = price;
         this.sellerName = sellerName;
+        this.ratingCount = 0;
         this.isForSale = isForSale;
     }
 
@@ -55,6 +57,16 @@ public class Wine {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    public void setRating(double rating) {
+        if (rating == 0){
+            this.rating = rating;
+        }
+        else {
+            this.rating = (this.rating + rating) / this.ratingCount;
+        }
+        this.ratingCount++;
+        }
 
     public void setIsForSale(boolean b) {
         isForSale = b;

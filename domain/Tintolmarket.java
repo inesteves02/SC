@@ -123,21 +123,38 @@ public class Tintolmarket {
                     System.out.println((String) in.readObject());
                 }
                 else if (inputArray[0].equals("buy") || inputArray[0].equals("b")){
+
                     out.writeObject(inputArray[0]);
                     out.writeObject(inputArray[1]);
                     out.writeObject(inputArray[2]);
                     out.writeObject(inputArray[3]);
-                    System.out.println(in.readObject());
+
+                    if ((boolean) in.readObject()){
+                        System.out.println("Wine bought successfully");
+                    }
+                    else{
+                        System.out.println("Wine not bought");
+                    }
                 }
                 else if (inputArray[0].equals("wallet") || inputArray[0].equals("w")){
+
                     out.writeObject(inputArray[0]);
-                    System.out.println(in.readObject());
+
+                    Double balance = (Double) in.readObject();
+                    System.out.println("Saldo Disponivel: "+ balance);
                 }
                 else if (inputArray[0].equals("classify") || inputArray[0].equals("c")){
+
                     out.writeObject(inputArray[0]);
                     out.writeObject(inputArray[1]);
                     out.writeObject(inputArray[2]);
-                    System.out.println(in.readObject());
+
+                    if ((boolean) in.readObject()){
+                        System.out.println("Wine classified successfully");
+                    }
+                    else{
+                        System.out.println("Wine not classified");
+                    }
                 }
                 else if (inputArray[0].equals("talk") || inputArray[0].equals("t")){
                     out.writeObject(inputArray[0]);

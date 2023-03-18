@@ -47,4 +47,8 @@ public class User {
     public void setWines(HashMap<String, Wine> wines) {
         this.wines = wines;
     }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
 }

@@ -113,6 +113,7 @@ public class FileWriterHandler {
         }
     }
 
+    // Enters the user's wine data and replaces the old wine data with the new one
     public void updateWine(User user, Wine wine) throws IOException {
 
         File file = new File(USER_DATA_FOLDER + "/" + user.getName() + "/" + WINE_FILE);
@@ -139,6 +140,15 @@ public class FileWriterHandler {
         for (String wineString : wines) {
             writer.write(wineString + "\n");
         }
+        writer.close();
+    }
+
+    public void updateUserBalance (User user) throws IOException {
+
+        File file = new File(USER_DATA_FOLDER + "/" + user.getName() + "/" + USER_FILE);
+
+        FileWriter writer = new FileWriter(file);
+        writer.write(Double.toString(user.getBalance()));
         writer.close();
     }
 }

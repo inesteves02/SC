@@ -142,9 +142,9 @@ public class TintolmarketServer {
 				fileWriterH.createUserFolderAndFiles(user);
 
 				userInteraction();
-				socket.close();
-				outStream.close();
 				inStream.close();
+				outStream.close();
+				socket.close();
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -220,7 +220,7 @@ public class TintolmarketServer {
 					StringBuilder sb = new StringBuilder();
 	
 					for (Wine wine : wines){
-						sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + "Euros, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ",Imagem: " + wine.getImage() + "\n");
+						sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + "Euros, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ", Imagem: " + wine.getImage() + "\n");
 					}
 
 					outStream.writeObject(sb.toString());
@@ -229,17 +229,81 @@ public class TintolmarketServer {
 				}
 
 			} else if (userInputArray[0].equals("buy") || userInputArray[0].equals("b") && userInputArray.length == 4 ){
-				//TODO
+				
+				try {
+					String wineName = (String) inStream.readObject();
+					String sellerName = (String) inStream.readObject();
+					int quantity = Integer.parseInt((String) inStream.readObject());
+
+					if (userCatalog.getUser(sellerName).haveWine(wineName)){
+
+						Wine wine = userCatalog.getUser(sellerName).getWine(wineName);
+
+						if (wine.getQuantity() < quantity){
+							outStream.writeObject(false);
+							return;
+						}
+
+						if (user.getBalance() < wine.getPrice() * quantity){
+							outStream.writeObject(false);
+							return;
+						}
+
+						wine.setQuantity(wine.getQuantity() - quantity); // update quantity
+						wineCatalog.updateWine(wine); // update wine catalog
+						userCatalog.getUser(sellerName).setBalance(userCatalog.getUser(sellerName).getBalance() + wine.getPrice() * quantity); // update seller balance
+						user.setBalance(user.getBalance() - wine.getPrice() * quantity); // update buyer balance
+
+						fileWriterH.updateWine(userCatalog.getUser(sellerName), wine); // update seller wine file
+						fileWriterH.updateUserBalance(userCatalog.getUser(sellerName)); // update seller balance file
+						fileWriterH.updateUserBalance(user); // update buyer balance file
+
+						outStream.writeObject(true);
+					} else {
+						outStream.writeObject(false);
+					}
+				} catch (ClassNotFoundException | IOException e) {
+					e.printStackTrace();
+				}
 			} else if (userInputArray[0].equals("wallet") || userInputArray[0].equals("w") && userInputArray.length == 1 ){
-				//TODO
+
+				outStream.writeObject(user.getBalance());
+
 			} else if (userInputArray[0].equals("classify") || userInputArray[0].equals("c") && userInputArray.length == 3 ){
-				//TODO
+				
+				try {
+					String wineName = (String) inStream.readObject();
+					int rating = Integer.parseInt((String) inStream.readObject());
+
+					if (rating < 1 || rating > 5){
+						outStream.writeObject(false);
+						return;
+					}
+
+					if (user.haveWine(wineName)){
+
+						Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
+						wine.setRating(rating);
+
+						fileWriterH.updateWine(user, wine);
+						wineCatalog.updateWine(wine);
+
+						outStream.writeObject(true);
+					} else {
+						outStream.writeObject(false);
+					}
+				} catch (ClassNotFoundException | IOException e) {
+					e.printStackTrace();
+				}
+
 			} else if (userInputArray[0].equals("talk") || userInputArray[0].equals("t") && userInputArray.length == 3 ){
 				//TODO
 			} else if (userInputArray[0].equals("read") || userInputArray[0].equals("r") && userInputArray.length == 1 ){
 				//TODO
 			} else if (userInputArray[0].equals("exit")){
 				return;
+			} else {
+				System.out.println("Invalid command!");
 			}
 			userInteraction();
 		}
