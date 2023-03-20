@@ -1,5 +1,6 @@
 package domain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,7 +18,7 @@ public class UserCatalog {
     }
 
     public void addUser(String name) {
-        users.put(name, new User(name, 200, new HashMap<String, Wine>()));
+        users.put(name, new User(name, 200, new HashMap<String, Wine>(), new ArrayList<Message>()));
     }
 
     public List<Wine> viewWine(String wineName) {

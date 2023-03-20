@@ -1,11 +1,13 @@
 package controllers;
 
+import domain.Message;
 import domain.User;
 import domain.Wine;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -136,5 +138,40 @@ public class FileWriterHandler {
         FileWriter writer = new FileWriter(path.toFile());
         writer.write(Double.toString(user.getBalance()));
         writer.close();
+    }
+
+    public void addMessage(Message message) {
+
+        Path path = Paths.get(USER_DATA_FOLDER, message.getReceiver(), MESSAGE_FILE);
+
+        try {
+            FileWriter writer = new FileWriter(path.toFile(), true);
+            BufferedWriter bw = new BufferedWriter(writer);
+            bw.write(message.getSender() + COLON_DELIMITER + message.getReceiver() + COLON_DELIMITER + message.getMessage() + "\n");
+            bw.close();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void clearMessages(User user) {
+
+        Path path = Paths.get(USER_DATA_FOLDER, user.getName(), MESSAGE_FILE);
+
+        FileWriter fw;
+        try {
+            fw = new FileWriter(path.toFile(), false);
+            PrintWriter pw = new PrintWriter(fw, false);
+            pw.flush();
+            pw.close();
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
     }
 }

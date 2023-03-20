@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TintolmarketServer {
 
@@ -197,12 +198,12 @@ public class TintolmarketServer {
 
 				case "talk":
 				case "t":
-					// TODO
+					talk();
 					break;
 
 				case "read":
 				case "r":
-					// TODO
+					read();
 					break;
 
 				case "exit":
@@ -370,6 +371,46 @@ public class TintolmarketServer {
 				e.printStackTrace();
 				return false;
 			}
+		}
+
+		private void talk() {
+			try {
+
+				String receiverName = (String) inStream.readObject();
+				String message = (String) inStream.readObject();
+
+				if (userCatalog.getUser(receiverName) != null) {
+
+					Message msg = new Message(user.getName(), receiverName, message);
+
+					User receiver = userCatalog.getUser(receiverName);
+
+					receiver.addMessage(msg);
+					fileWriterH.addMessage(msg);
+
+					outStream.writeObject(true);
+
+				} else {
+					outStream.writeObject(false);
+				}
+			} catch (ClassNotFoundException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		private void read() {
+				try {
+
+					List<Message> messages = user.getMessages();
+
+					String result = messages.stream().map(Message::toString).collect(Collectors.joining("\n"));
+					
+					outStream.writeObject(result);
+					user.clearMessages();
+					fileWriterH.clearMessages(user);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 		}
 	}
 

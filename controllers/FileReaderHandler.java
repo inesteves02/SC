@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import domain.User;
 import domain.Wine;
+import domain.Message;
 
 public class FileReaderHandler {
 
@@ -33,8 +36,10 @@ public class FileReaderHandler {
 
                     HashMap<String, Wine> wines = readWinesFromFile(f.getAbsolutePath() + "/" + WINE_FILE);
 
+                    List<Message> messages = readMessagesFromFile(f.getAbsolutePath() + "/" + MESSAGE_FILE);
+
                     // create user object and add to HashMap
-                    User user = new User(f.getName(), Double.parseDouble(balance), wines);
+                    User user = new User(f.getName(), Double.parseDouble(balance), wines, messages);
                     users.put(f.getName(), user);
                 }
             }
@@ -46,6 +51,7 @@ public class FileReaderHandler {
         }
     }
 
+    
     private String readBalanceFromFile(String filepath) {
         String balance = null;
         try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
@@ -56,13 +62,13 @@ public class FileReaderHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        
         return balance;
     }
-
+    
     /*
-     * Read wine data from file
-     */
+    * Read wine data from file
+    */
     private HashMap<String, Wine> readWinesFromFile(String filepath) {
         HashMap<String, Wine> wines = new HashMap<>();
         try {
@@ -71,15 +77,35 @@ public class FileReaderHandler {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
                 Wine wine = new Wine(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3]),
-                        Double.parseDouble(parts[4]), parts[5], Boolean.parseBoolean(parts[6]));
+                Double.parseDouble(parts[4]), parts[5], Boolean.parseBoolean(parts[6]));
                 wines.put(parts[0], wine);
             }
-
+            
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return wines;
+    }
+    
+    private List<Message> readMessagesFromFile(String string) {
+        
+        List<Message> messages = new ArrayList<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(string));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(":");
+                Message msg = new Message(parts[0], parts[1], parts[2]);
+                messages.add(msg);
+            }
+            
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return messages;
     }
 
     /*

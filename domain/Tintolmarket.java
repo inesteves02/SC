@@ -3,6 +3,7 @@ package domain;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Tintolmarket {
@@ -164,15 +165,17 @@ public class Tintolmarket {
             case "t":
                 out.writeObject(inputArray[0]);
                 out.writeObject(inputArray[1]);
-                out.writeObject(inputArray[2]);
+                out.writeObject(String.join(" ", Arrays.copyOfRange(inputArray, 2, inputArray.length)));
                 System.out.println(in.readObject());
                 break;
 
             case "read":
             case "r":
+            
                 out.writeObject(inputArray[0]);
-                Object messages = in.readObject();
-                if (messages == null) {
+                String messages = (String) in.readObject();
+
+                if (messages.isEmpty()) {
                     System.out.println("No messages");
                 } else {
                     System.out.println(messages);
