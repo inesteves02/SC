@@ -222,6 +222,7 @@ public class TintolmarketServer {
 				String wineName = (String) inStream.readObject();
 				String wineImage = (String) inStream.readObject();
 		
+				//if the wine doesn't already exists, then we add it to the catalog
 				if (!user.haveWine(wineName)) {
 		
 					Wine wine = new Wine(wineName, wineImage, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING, user.getName(), DEFAULT_IS_FOR_SALE);
@@ -243,6 +244,7 @@ public class TintolmarketServer {
 				double value = Double.parseDouble((String) inStream.readObject());
 				int quantity = Integer.parseInt((String) inStream.readObject());
 		
+				//to sell a wine, it has to be present in the user catalog
 				if (user.haveWine(wineName)) {
 		
 					Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
@@ -404,7 +406,7 @@ public class TintolmarketServer {
 					List<Message> messages = user.getMessages();
 
 					String result = messages.stream().map(Message::toString).collect(Collectors.joining("\n"));
-					
+
 					outStream.writeObject(result);
 					user.clearMessages();
 					fileWriterH.clearMessages(user);
