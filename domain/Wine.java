@@ -59,13 +59,13 @@ public class Wine {
     }
 
     public void setRating(double rating) {
-        if (rating == 0){
+        this.ratingCount++;
+        if (this.rating == 0){
             this.rating = rating;
         }
         else {
             this.rating = (this.rating + rating) / this.ratingCount;
         }
-        this.ratingCount++;
         }
 
     public void setIsForSale(boolean b) {
