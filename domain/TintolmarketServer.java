@@ -93,14 +93,10 @@ public class TintolmarketServer {
 		private ObjectInputStream inStream;
 		private User user;
 
-		ServerThread(Socket inSoc) {
+		ServerThread(Socket inSoc) throws IOException{
 			this.socket = inSoc;
-			try {
-				outStream = new ObjectOutputStream(socket.getOutputStream());
-				inStream = new ObjectInputStream(socket.getInputStream());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			outStream = new ObjectOutputStream(socket.getOutputStream());
+			inStream = new ObjectInputStream(socket.getInputStream());
 			System.out.println("Client connected!");
 		}
 		
@@ -143,6 +139,7 @@ public class TintolmarketServer {
 				fileWriterH.createUserFolderAndFiles(user);
 
 				userInteraction();
+				
 				inStream.close();
 				outStream.close();
 				socket.close();
