@@ -15,7 +15,7 @@ A aplicação deve ser executada da seguinte maneira:
    - <port> identifica o porto (TCP) para aceitar ligações de clientes. Por omissão o servidor deve usar o porto 12345.
 
 2. Cliente:
-   Tintolmarket serverAddress> <userID> [password]
+   Tintolmarket <serverAddress> <userID> [password]
    Em que:
    - <serverAddress> identifica o servidor. O formato de serverAddress é o seguinte: <IP/hostname>[:Port]. O endereço IP ou o hostname do servidor são obrigatórios e o porto é opcional. Por omissão, o cliente deve ligar-se ao porto 12345 do servidor.
    - <clientID> identifica o utilizador local.
