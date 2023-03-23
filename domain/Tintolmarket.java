@@ -24,13 +24,35 @@ public class Tintolmarket {
 
     public static void main(String[] args) {
         try {
-            Socket clientSocket = new Socket("localhost", 12345);
+            if (args.length != 2 || args.length != 3){
+                System.err.println("Usage: java Tintolmarket <server port> <username> <password>");
+                System.exit(1);
+            }
 
-            in = new ObjectInputStream(clientSocket.getInputStream());
-            out = new ObjectOutputStream(clientSocket.getOutputStream());
+            String serverAddress = args[0];
+            int port = 12345;
+            if (serverAddress.contains(":")) {
+                String[] parts = serverAddress.split(":");
+                serverAddress = parts[0];
+                port = Integer.parseInt(parts[1]);
+            }
+
+            String username = args[1];
+
             sc = new Scanner(System.in);
 
-            if (clientLogin()) {
+            String password = args[2];
+
+            if (args.length == 2) {
+                System.out.println("Insert password: ");
+                password = sc.nextLine();
+            }
+
+            Socket clientSocket = new Socket(serverAddress, port);
+            ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+            ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
+
+            if (clientLogin(username, password)) {
                 System.out.println("Login successful\n");
                 clientInteraction();
             } else {
@@ -47,16 +69,11 @@ public class Tintolmarket {
 
     }
 
-    private static boolean clientLogin() {
+    private static boolean clientLogin(String username, String password) {
         try {
-            System.out.print("Insert username:");
-            String user = sc.nextLine();
-
-            System.out.print("Insert password:");
-            String pass = sc.nextLine();
-
-            out.writeObject(user);
-            out.writeObject(pass);
+            
+            out.writeObject(username);
+            out.writeObject(password);
 
             return (boolean) in.readObject();
             
