@@ -107,36 +107,41 @@ public class TintolmarketServer {
 		 * If the password is wrong, it prints "Wrong password!" to the console.
 		 * If the user is not found, it prints "User not found! Creating new user..." to the console and calls the addUser() method of the FileWriterHandler object.
 		 */
-		public void run(){
+		public synchronized void run(){
 			try {
+				
+					String username = (String) inStream.readObject();
+					String password = (String) inStream.readObject();
 
-				String username = (String) inStream.readObject();
-				String password = (String) inStream.readObject();
+					synchronized (this) {
+						int login = fileReaderH.clientLogin(username, password);
+						if (login == 0){
+							System.out.println("Client " + user + " tried to login with wrong password! Disconnecting...");
+							outStream.writeBoolean(false);
+							outStream.close();
+							inStream.close();
+							socket.close();
+							return;
+	
+						} else if (login == -1){
+							System.out.println("User not found! Creating new user...");
+							fileWriterH.addUser(username, password);
+							userCatalog.addUser(username);
+							user = userCatalog.getUser(username);
+						} else {
+							user = userCatalog.getUser(username);
+						}
+					}
 
-				int login = fileReaderH.clientLogin(username, password);
 
-				if (login == 0){
-					System.out.println("Client " + user + " tried to login with wrong password! Disconnecting...");
-					outStream.writeBoolean(false);
-					outStream.close();
-					inStream.close();
-					socket.close();
-					return;
+					System.out.println("Login successful!");
+					outStream.writeObject(true);
 
-				} else if (login == -1){
-					System.out.println("User not found! Creating new user...");
-					fileWriterH.addUser(username, password);
-					userCatalog.addUser(username);
-					user = userCatalog.getUser(username);
-				} else {
-					user = userCatalog.getUser(username);
-				}
-
-				System.out.println("Login successful!");
-				outStream.writeObject(true);
-
-				//create user folder and its files with their default values
-				fileWriterH.createUserFolderAndFiles(user);
+					//create user folder and its files with their default values
+					synchronized (this) {
+						fileWriterH.createUserFolderAndFiles(user);
+					}
+				
 
 				userInteraction();
 				
@@ -151,7 +156,7 @@ public class TintolmarketServer {
 			}
 		}
 
-		private void userInteraction() throws IOException{
+		private synchronized void userInteraction() throws IOException{
 
 			String userInput = "";
 
@@ -161,57 +166,60 @@ public class TintolmarketServer {
 				System.err.println("Error reading user input! Disconnecting...");
 				return;
 			}
+			
+			synchronized (this) {
 
-			switch (userInput) {
-				case "add":
-				case "a":
-					addWine();
-					break;
-
-				case "sell":
-				case "s":
-					sellWine();
-					break;
-
-				case "view":
-				case "v":
-					viewWines();
-					break;
-
-				case "buy":
-				case "b":
-					buyWine();
-					break;
-
-				case "wallet":
-				case "w":
-					outStream.writeObject(user.getBalance());
-					break;
-
-				case "classify":
-				case "c":
-					classifyWine();
-					break;
-
-				case "talk":
-				case "t":
-					talk();
-					break;
-
-				case "read":
-				case "r":
-					read();
-					break;
-
-				case "exit":
-					return;
-
-				default:
-					System.out.println("Invalid command!");
-					break;
+				switch (userInput) {
+					case "add":
+					case "a":
+						addWine();
+						break;
+	
+					case "sell":
+					case "s":
+						sellWine();
+						break;
+	
+					case "view":
+					case "v":
+						viewWines();
+						break;
+	
+					case "buy":
+					case "b":
+						buyWine();
+						break;
+	
+					case "wallet":
+					case "w":
+						outStream.writeObject(user.getBalance());
+						break;
+	
+					case "classify":
+					case "c":
+						classifyWine();
+						break;
+	
+					case "talk":
+					case "t":
+						talk();
+						break;
+	
+					case "read":
+					case "r":
+						read();
+						break;
+	
+					case "exit":
+						return;
+	
+					default:
+						System.out.println("Invalid command!");
+						break;
+				}
+	
+				userInteraction();
 			}
-
-			userInteraction();
 		}
 
 		private void addWine() {
@@ -264,7 +272,7 @@ public class TintolmarketServer {
 			StringBuilder sb = new StringBuilder();
 		
 			for (Wine wine : wines) {
-				sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + "\u20AC, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ", Imagem: " + wine.getImage() + "\n");
+				sb.append("Nome: " + wine.getName() + ", " + wine.getPrice() + " Euros, Quantidade: " + wine.getQuantity() + ", Classificação: " + wine.getRating() + ", Vendedor: " + wine.getSellerName() + ", Imagem: " + wine.getImage() + "\n");
 			}
 		
 			return sb.toString();
@@ -301,6 +309,14 @@ public class TintolmarketServer {
 					fileWriterH.updateUserBalance(user); // update buyer balance file
 		
 					outStream.writeObject(true);
+
+					outStream.writeObject("Wish to rate the wine? (y/n)");
+
+					String answer = (String) inStream.readObject();
+
+					if (answer.equals("y")) {
+						classifyWine();
+					}
 				} else {
 					outStream.writeObject(false);
 				}
@@ -340,14 +356,22 @@ public class TintolmarketServer {
 				String wineName = (String) inStream.readObject();
 				int rating = Integer.parseInt((String) inStream.readObject());
 		
-				if (isValidRating(rating) && user.haveWine(wineName)) {
+				if (isValidRating(rating)) {
 		
-					Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
-					wine.setRating(rating);
-		
-					fileWriterH.updateWine(user, wine);
-					wineCatalog.updateWine(wine);
-		
+					List<Wine> wines = wineCatalog.getWines(wineName);
+
+					wines.forEach(wine -> 
+						wine.setRating(rating)
+					);
+
+					wines.forEach(wine -> {
+						try {
+							fileWriterH.updateWine(userCatalog.getUser(wine.getSellerName()), wine);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					});
+				
 					outStream.writeObject(true);
 				} else {
 					outStream.writeObject(false);

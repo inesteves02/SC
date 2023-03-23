@@ -43,7 +43,7 @@ public class FileWriterHandler {
         }
     }
 
-    public void addUser(String user, String pass) {
+    public synchronized void addUser(String user, String pass) {
         try (FileWriter writer = new FileWriter(LOGIN_FILE, true)) {
             writer.write(user + COLON_DELIMITER + pass + "\n");
         } catch (IOException e) {
@@ -94,7 +94,7 @@ public class FileWriterHandler {
         fw.close();
     }
 
-    public void addWineToUser(User user, Wine wine) {
+    public synchronized void addWineToUser(User user, Wine wine) {
         Path path = Paths.get(USER_DATA_FOLDER, user.getName());
         File wineFile = new File(path.toString(), WINE_FILE);
 
@@ -107,7 +107,7 @@ public class FileWriterHandler {
         }
     }
 
-    public void updateWine(User user, Wine wine) throws IOException {
+    public synchronized void updateWine(User user, Wine wine) throws IOException {
         Path path = Paths.get(USER_DATA_FOLDER, user.getName());
         File wineFile = new File(path.toString(), WINE_FILE);
 
@@ -133,14 +133,14 @@ public class FileWriterHandler {
         writer.close();
     }
 
-    public void updateUserBalance(User user) throws IOException {
+    public synchronized void updateUserBalance(User user) throws IOException {
         Path path = Paths.get(USER_DATA_FOLDER, user.getName(), USER_FILE);
         FileWriter writer = new FileWriter(path.toFile());
         writer.write(Double.toString(user.getBalance()));
         writer.close();
     }
 
-    public void addMessage(Message message) {
+    public synchronized void addMessage(Message message) {
 
         Path path = Paths.get(USER_DATA_FOLDER, message.getReceiver(), MESSAGE_FILE);
 
@@ -157,7 +157,7 @@ public class FileWriterHandler {
 
     }
 
-    public void clearMessages(User user) {
+    public synchronized void clearMessages(User user) {
 
         Path path = Paths.get(USER_DATA_FOLDER, user.getName(), MESSAGE_FILE);
 

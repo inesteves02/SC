@@ -17,7 +17,7 @@ public class UserCatalog {
         return users.get(name);
     }
 
-    public void addUser(String name) {
+    public synchronized void addUser(String name) {
         users.put(name, new User(name, 200, new HashMap<String, Wine>(), new ArrayList<Message>()));
     }
 

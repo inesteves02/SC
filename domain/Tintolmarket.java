@@ -81,6 +81,7 @@ public class Tintolmarket {
                 
             } while(!input.equalsIgnoreCase("exit"));
 
+            
             out.writeObject(input);
             sc.close();
         } catch (Exception e) {
@@ -135,6 +136,7 @@ public class Tintolmarket {
 
                 if ((boolean) in.readObject()) {
                     System.out.println("Wine bought successfully");
+                    
                 } else {
                     System.out.println("Wine not bought");
                 }
@@ -155,7 +157,9 @@ public class Tintolmarket {
                 out.writeObject(inputArray[2]);
 
                 if ((boolean) in.readObject()) {
+
                     System.out.println("Wine classified successfully");
+
                 } else {
                     System.out.println("Wine not classified");
                 }
