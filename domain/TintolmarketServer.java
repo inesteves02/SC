@@ -34,11 +34,19 @@ public class TintolmarketServer {
         
         System.out.println("Server is starting...");
 
+		int socket; // Declare a variable to store the socket number
+
+		if (args.length == 1) { // If the user has specified a socket number, use it
+			socket = Integer.parseInt(args[0]);
+		} else { // If the user has not specified a socket number, use the default value
+			socket = 12345;
+		}
+
         TintolmarketServer server = new TintolmarketServer();
 
 		server.init(); // Initialize the required objects
 
-        server.startServer(); // Start the server and wait for clients
+        server.startServer(socket); // Start the server and wait for clients
     }
 
 	private void init() { // Initialize the required objects 
@@ -53,18 +61,11 @@ public class TintolmarketServer {
 
     } 
 
-	/*
-	 * This code creates a ServerSocket object with port number 12345 and then enters an infinite loop. 
-	 * In each iteration of the loop, it calls the accept() method of the ServerSocket object to wait for a client connection. 
-	 * When a client connects, it creates a new ServerThread object and starts it. 
-	 * The loop continues until the program is terminated. The commented out line at the end closes the ServerSocket object, 
-	 * but this line is never reached due to the infinite loop.
-	 */
-    public void startServer (){
+    public void startServer (int socket){
 		ServerSocket sSoc = null;
 
 		try {
-			sSoc = new ServerSocket(12345);
+			sSoc = new ServerSocket(socket);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
