@@ -2,7 +2,6 @@ package domain;
 
 import controllers.FileReaderHandler;
 import controllers.FileWriterHandler;
-
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -57,6 +56,7 @@ public class TintolmarketServer {
 		wineCatalog = new WineCatalog(userCatalog);
 	}
 
+	//initiates the server (starts it )
 	public void startServer(int socket) {
 		ServerSocket serverSocket = null;
 
@@ -211,6 +211,7 @@ public class TintolmarketServer {
 			userInteraction();
 		}
 
+		// adds a new wine in case it doesnt already exists
 		private void addWine() {
 			try {
 
@@ -269,6 +270,7 @@ public class TintolmarketServer {
 			}
 		}
 
+		// constructs the view command
 		private String buildViewResponse(List<Wine> wines) {
 			StringBuilder sb = new StringBuilder();
 
@@ -356,6 +358,7 @@ public class TintolmarketServer {
 			}
 		}
 
+		//checks if the Wine is valid for sell with the input given
 		private boolean isValidBuyInput(String wineName, String sellerName, int quantity) {
 			try {
 				if (!userCatalog.getUser(sellerName).haveWine(wineName)) {
@@ -382,6 +385,7 @@ public class TintolmarketServer {
 			}
 		}
 
+		// gives a classification to the specific wine
 		private void classifyWine() {
 			try {
 				String wineName = (String) inStream.readObject();
@@ -410,6 +414,7 @@ public class TintolmarketServer {
 			}
 		}
 
+		// checks if the classification is valid
 		private boolean isValidRating(int rating) {
 			try {
 				if (rating < 1 || rating > 5) {

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// All file writing operations
+// All file writting operations
 public class FileWriterHandler {
 
     private final String LOGIN_FILE = "login.txt";

@@ -72,6 +72,7 @@ public class Tintolmarket {
 
     }
 
+    // sends the client's username and password to TintoImarketServer
     private static boolean clientLogin(String username, String password) {
         try {
 

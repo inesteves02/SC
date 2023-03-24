@@ -24,26 +24,32 @@ public class User {
         this.messages = messages;
     } 
 
+    // returns the name of the user
     public String getName() {
         return name;
     }
 
+    // returns the balence of the user
     public double getBalance() {
         return balance;
     }
 
+    // returns the wine with that name
     public Wine getWine(String name) {
         return wines.get(name);
     }
+
 
     public HashMap<String, Wine> getWines() {
         return wines;
     }
 
+    //Returns true if it has the specific wine
     public boolean haveWine(String name) {
         return wines.containsKey(name);
     }
 
+    // adds wine
     public void addWine(Wine wine) {
         wines.put(wine.getName(), wine);
     }
@@ -52,18 +58,22 @@ public class User {
         this.wines = wines;
     }
 
+    //updates the balance
     public void setBalance(double balance) {
         this.balance = balance;
     }
 
+    // sends a message
     public void addMessage(Message msg) {
         messages.add(msg);
     }
 
+    // returns the messages
     public List<Message> getMessages() {
         return messages;
     }
 
+    //clears the messages
     public void clearMessages() {
         if (messages != null) {
             messages.clear();
