@@ -76,8 +76,8 @@ public class FileReaderHandler {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
-                Wine wine = new Wine(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3]),
-                Double.parseDouble(parts[4]), parts[5], Boolean.parseBoolean(parts[6]));
+                Wine wine = new Wine(parts[0], Double.parseDouble(parts[1]), Integer.parseInt(parts[2]),
+                Double.parseDouble(parts[3]), parts[4], Boolean.parseBoolean(parts[5]), parts[6]);
                 wines.put(parts[0], wine);
             }
             
@@ -88,19 +88,24 @@ public class FileReaderHandler {
         return wines;
     }
     
-    private List<Message> readMessagesFromFile(String string) {
-        
+    private List<Message> readMessagesFromFile(String filename) {
+        // List of messages to return
         List<Message> messages = new ArrayList<>();
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(string));
+            // Open the file
+            BufferedReader reader = new BufferedReader(new FileReader(filename));
             String line;
+            // Read each line of the file
             while ((line = reader.readLine()) != null) {
+                // Split each line of the file into parts
                 String[] parts = line.split(":");
+                // Create a new message from each line
                 Message msg = new Message(parts[0], parts[1], parts[2]);
+                // Add the new message to the list
                 messages.add(msg);
             }
-            
+            // Close the file
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();

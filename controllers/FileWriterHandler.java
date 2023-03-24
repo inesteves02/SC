@@ -5,6 +5,7 @@ import domain.User;
 import domain.Wine;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -20,6 +21,7 @@ public class FileWriterHandler {
 
     private final String LOGIN_FILE = "login.txt";
     private final String USER_DATA_FOLDER = "user_data";
+    private final String IMAGE_FOLDER = "images";
     private final String USER_FILE = "User.txt";
     private final String WINE_FILE = "Wine.txt";
     private final String MESSAGE_FILE = "Message.txt";
@@ -64,20 +66,23 @@ public class FileWriterHandler {
 
     public void createUserFolderAndFiles(User user) {
         Path path = Paths.get(USER_DATA_FOLDER, user.getName());
+        if (Files.exists(path)) {
+            return;
+        }
         try {
-            if (!Files.exists(path)) {
-                Files.createDirectory(path);
+            Files.createDirectory(path);
 
-                File userFile = new File(path.toString(), USER_FILE);
-                File wineFile = new File(path.toString(), WINE_FILE);
-                File messageFile = new File(path.toString(), MESSAGE_FILE);
+            File imageFolder = new File(path.toString(), IMAGE_FOLDER);
+            File userFile = new File(path.toString(), USER_FILE);
+            File wineFile = new File(path.toString(), WINE_FILE);
+            File messageFile = new File(path.toString(), MESSAGE_FILE);
 
-                userFile.createNewFile();
-                wineFile.createNewFile();
-                messageFile.createNewFile();
+            imageFolder.mkdir();
+            userFile.createNewFile();
+            wineFile.createNewFile();
+            messageFile.createNewFile();
 
-                writeUserBalance(user, path);
-            }
+            writeUserBalance(user, path);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -95,17 +100,17 @@ public class FileWriterHandler {
     }
 
     public synchronized void addWineToUser(User user, Wine wine) {
-        Path path = Paths.get(USER_DATA_FOLDER, user.getName());
-        File wineFile = new File(path.toString(), WINE_FILE);
+    Path path = Paths.get(USER_DATA_FOLDER, user.getName());
+    File wineFile = new File(path.toString(), WINE_FILE);
 
-        try {
-            FileWriter writer = new FileWriter(wineFile, true);
-            writer.write(wine.getName() + COLON_DELIMITER + wine.getImage() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity() + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER + wine.isForSale() + "\n");
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    try {
+        FileWriter writer = new FileWriter(wineFile, true);
+        writer.write(wine.getName() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity() + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER + wine.isForSale() + COLON_DELIMITER + wine.getImageFormat() + "\n");
+        writer.close();
+    } catch (IOException e) {
+        e.printStackTrace();
     }
+}
 
     public synchronized void updateWine(User user, Wine wine) throws IOException {
         Path path = Paths.get(USER_DATA_FOLDER, user.getName());
@@ -113,19 +118,23 @@ public class FileWriterHandler {
 
         List<String> wines = new ArrayList<>();
 
+        // Read the wine file and put all of the lines in a list
         try (Stream<String> stream = Files.lines(wineFile.toPath())) {
             wines = stream.collect(Collectors.toList());
         }
 
+        // Loop through the list until we find the wine we want to update
         boolean guard = false;
         for (int i = 0; i < wines.size() && !guard; i++) {
             String[] wineData = wines.get(i).split(COLON_DELIMITER);
             if (wineData[0].equals(wine.getName())) {
-                wines.set(i, wine.getName() + COLON_DELIMITER + wine.getImage() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity() + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER + wine.isForSale());
+                // Update the wine data
+                wines.set(i, wine.getName() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity() + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER + wine.isForSale() + COLON_DELIMITER + wine.getImageFormat());
                 guard = true;
             }
         }
 
+        // Write the updated list back to the wine file
         FileWriter writer = new FileWriter(wineFile);
         for (String wineString : wines) {
             writer.write(wineString + "\n");
@@ -154,24 +163,37 @@ public class FileWriterHandler {
             e.printStackTrace();
         }
 
-
     }
 
     public synchronized void clearMessages(User user) {
 
         Path path = Paths.get(USER_DATA_FOLDER, user.getName(), MESSAGE_FILE);
 
-        FileWriter fw;
         try {
-            fw = new FileWriter(path.toFile(), false);
-            PrintWriter pw = new PrintWriter(fw, false);
-            pw.flush();
-            pw.close();
-            fw.close();
+            FileWriter fw = new FileWriter(path.toFile(), false);
+            try (PrintWriter pw = new PrintWriter(fw, false)) {
+                pw.flush();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public void saveImage(byte[] image, String wineName, String imageFormat, User user) {
 
+        // Create the path to the image folder
+        Path path = Paths.get(USER_DATA_FOLDER, user.getName(), IMAGE_FOLDER);
+
+        // Create the image file
+        File imageFile = new File(path.toString(), wineName + "." + imageFormat);
+
+        try {
+            // Write the image to the file
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            fos.write(image);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

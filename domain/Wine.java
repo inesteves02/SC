@@ -4,30 +4,26 @@ public class Wine {
 
     private String sellerName;
     private String name;
-    private String image;
     private double price;
     private int quantity;
     private double rating;
     private int ratingCount;
     private boolean isForSale;
+    private String imageFormat;
 
-    public Wine(String name, String image, double price, int quantity, double rating, String sellerName, boolean isForSale) {
+    public Wine(String name, double price, int quantity, double rating, String sellerName, boolean isForSale, String imageFormat) {
         this.name = name;
-        this.image = image;
         this.rating = rating;
         this.quantity = quantity;
         this.price = price;
         this.sellerName = sellerName;
         this.ratingCount = 0;
         this.isForSale = isForSale;
+        this.imageFormat = imageFormat;
     }
 
     public String getName() {
         return name;
-    }
-
-    public String getImage() {
-        return image;
     }
 
     public double getPrice() {
@@ -70,5 +66,13 @@ public class Wine {
 
     public void setIsForSale(boolean b) {
         isForSale = b;
+    }
+
+    public String getImageFormat() {
+        return imageFormat;
+    }
+
+    public void setImageFormat(String imageFormat) {
+        this.imageFormat = imageFormat;
     }
 }
