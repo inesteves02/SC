@@ -40,3 +40,4 @@ O servidor mantém um arquivo com os usuários do sistema e suas respectivas sen
 
 - Inês Esteves (56276)
 - Vasco Barros (54986)
+- André Pereira (56298)
