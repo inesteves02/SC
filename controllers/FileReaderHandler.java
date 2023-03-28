@@ -12,7 +12,6 @@ import domain.User;
 import domain.Wine;
 import domain.Message;
 
-// all file reading operations
 public class FileReaderHandler {
 
     private final String LOGIN_FILE = "login.txt";
@@ -52,8 +51,7 @@ public class FileReaderHandler {
         }
     }
 
-
-    //reads balance from file given in the filepath
+    
     private String readBalanceFromFile(String filepath) {
         String balance = null;
         try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
@@ -90,7 +88,6 @@ public class FileReaderHandler {
         return wines;
     }
     
-    //read the messages from a specific file
     private List<Message> readMessagesFromFile(String filename) {
         // List of messages to return
         List<Message> messages = new ArrayList<>();
