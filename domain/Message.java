@@ -12,21 +12,17 @@ public class Message {
         this.message = message;
     }
 
-    // returns the sender of the message
     public String getSender() {
         return sender;
     }
 
-    //returns the receiver of the message
     public String getReceiver() {
         return receiver;
     }
 
-    // returns the message sent
     public String getMessage() {
         return message;
     }
-
 
     public String toString() {
         return sender + " -> " + receiver + ": " + message;

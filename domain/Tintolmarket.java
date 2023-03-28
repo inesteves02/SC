@@ -1,4 +1,3 @@
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,11 +43,13 @@ public class Tintolmarket {
 
             sc = new Scanner(System.in);
 
-            String password = args[2];
+            String password;
 
             if (args.length == 2) {
                 System.out.println("Insert password: ");
                 password = sc.nextLine();
+            } else {
+                password = args[2];
             }
 
             Socket clientSocket = new Socket(serverAddress, port);

@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// catologo de users
 public class UserCatalog {
     
     private HashMap<String, User> users;
@@ -22,7 +21,6 @@ public class UserCatalog {
         users.put(name, new User(name, 200, new HashMap<String, Wine>(), new ArrayList<Message>()));
     }
 
-    // returns the catalog of users
     public List<Wine> viewWine(String wineName) {
         return users.entrySet().stream()
             .filter(user -> user.getValue().haveWine(wineName))
