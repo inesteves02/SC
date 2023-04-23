@@ -28,8 +28,8 @@ public class Tintolmarket {
 
     public static void main(String[] args) {
         try {
-            if (args.length != 2 && args.length != 3) {
-                System.err.println("Usage: java Tintolmarket <server port> <username> <password>");
+            if (args.length != 4) {
+                System.err.println("Usage: java Tintolmarket <serverAdress> <truststore> <keyStore> <password-keyStore> <userID>");
                 System.exit(1);
             }
 
@@ -41,7 +41,10 @@ public class Tintolmarket {
                 port = Integer.parseInt(parts[1]);
             }
 
-            String username = args[1];
+            String trustStore = args[1];
+            String keyStore = args[2];
+            String passwordKeyStore = args[3];
+            String username = args[4];
 
             sc = new Scanner(System.in);
 
