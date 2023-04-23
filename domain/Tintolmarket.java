@@ -28,7 +28,7 @@ public class Tintolmarket {
 
     public static void main(String[] args) {
         try {
-            if (args.length != 4) {
+            if (args.length != 5) {
                 System.err.println("Usage: java Tintolmarket <serverAdress> <truststore> <keyStore> <password-keyStore> <userID>");
                 System.exit(1);
             }
