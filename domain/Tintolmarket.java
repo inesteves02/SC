@@ -50,12 +50,12 @@ public class Tintolmarket {
 
             String password;
 
-            if (args.length == 2) {
+//            if (args.length == 2) {
                 System.out.println("Insert password: ");
                 password = sc.nextLine();
-            } else {
-                password = args[2];
-            }
+//            } else {
+//                password = args[2];
+//            }
 
             Socket clientSocket = new Socket(serverAddress, port);
             in = new ObjectInputStream(clientSocket.getInputStream());
