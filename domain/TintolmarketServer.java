@@ -36,7 +36,6 @@ import javax.net.ssl.SSLServerSocketFactory;
 
 public class TintolmarketServer {
 
-
 	private static FileReaderHandler fileReaderH; // Declare FileReaderHandler object
 	private static FileWriterHandler fileWriterH; // Declare FileWriterHandler object
 	private static UserCatalog userCatalog; // Declare UserCatalog object
@@ -58,49 +57,52 @@ public class TintolmarketServer {
 	 */
 	public static void main(String[] args) {
 
-		
-		String keyStoreName;
-		String keyStorePassword;
-		String cifraPassword;
+		try {
+			String keyStoreName;
+			String keyStorePassword;
+			String cifraPassword;
 
-		System.out.println("Server is starting...");
+			System.out.println("Server is starting...");
 
-		int port;
+			int port;
 
-		if (args.length == 4) {
-			port = Integer.parseInt(args[0]);
-			cifraPassword = args[1];
-			keyStoreName = args[2];
-			keyStorePassword = args[3];
+			if (args.length == 4) {
+				port = Integer.parseInt(args[0]);
+				cifraPassword = args[1];
+				keyStoreName = args[2];
+				keyStorePassword = args[3];
 
-		} else {
-			port = 12345;
-			cifraPassword = args[0];
-			keyStoreName = args[1];
-			keyStorePassword = args[2];
+			} else {
+				port = 12345;
+				cifraPassword = args[0];
+				keyStoreName = args[1];
+				keyStorePassword = args[2];
+			}
+
+			System.setProperty("javax.net.ssl.keyStore", keyStoreName);
+			System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+
+			TintolmarketServer server = new TintolmarketServer();
+			server.init();
+
+			// SecretKey chave = EncryptUtils.generateKey(cifraPassword);
+			Cipher cifra = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+
+			// Sockets SSL
+			ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
+			SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(port);
+
+			// Vai buscar o keystore do servidor
+			FileInputStream keyFile = new FileInputStream(keyStoreName);
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+			keyStore.load(keyFile, keyStorePassword.toCharArray());
+			// Vai buscar a chave privada do servidor
+			PrivateKey privKey = (PrivateKey) keyStore.getKey("TintolmarketServer", keyStorePassword.toCharArray());
+
+			server.startServer(serverSocket);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
-		System.setProperty("javax.net.ssl.keyStore", keyStoreName);
-		System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-		
-		TintolmarketServer server = new TintolmarketServer();
-		server.init();
-
-		SecretKey chave = EncryptUtils.generateKey(cifraPassword);
-		Cipher cifra = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
-
-		//Sockets SSL
-		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
-		SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(port);
-
-		//Vai buscar o keystore do servidor
-		FileInputStream keyFile = new FileInputStream(keyStoreName);
-		KeyStore keyStore = KeyStore.getInstance("JKS");
-		keyStore.load(keyFile, keyStorePassword.toCharArray());
-		//Vai buscar a chave privada do servidor
-		PrivateKey privKey = (PrivateKey) keyStore.getKey("TintolmarketServer", keyStorePassword.toCharArray());
-
-		server.startServer(port);
 	}
 
 	private void init() {
@@ -110,19 +112,11 @@ public class TintolmarketServer {
 		wineCatalog = new WineCatalog(userCatalog);
 	}
 
-	public void startServer(int port) {
-		ServerSocket serverport = null;
-
-		try {
-			serverport = new ServerSocket(port);
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
-		}
+	public void startServer(SSLServerSocket serverSocket) {
 
 		while (true) {
 			try {
-				Socket inSoc = serverport.accept();
+				Socket inSoc = serverSocket.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
 			} catch (IOException e) {
@@ -166,56 +160,57 @@ public class TintolmarketServer {
 				System.out.println("Client connected! Waiting for authentication...");
 				String userID = (String) inStream.readObject();
 
-					outStream.writeObject(nonce);
-					outStream.flush();
-					boolean existUser = userCatalog.existUser(userID);
+				outStream.writeObject(nonce);
+				outStream.flush();
+				boolean existUser = userCatalog.existUser(userID);
 
-					if (!existUser){
+				if (!existUser) {
 
-						long nonce = (long) inStream.readObject();
+					long nonce = (long) inStream.readObject();
 
-						if (nonce != this.nonce){
-							outStream.writeObject(false);
-						}
-
-						byte[] ceritficado_byte = (byte[]) inStream.readObject();
-						Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(ceritficado_byte));
-
-						this.public_key = certificado.getPublicKey();
-
-						SignedObject signedObject = (SignedObject) inStream.readObject();
-						Signature signature = Signature.getInstance("MD5withRSA");
-
-						boolean verify = signedObject.verify(public_key, signature);
-
-						if (verify){
-							File certificate_file = new File("certificates/" + userID + ".cer");
-							certificate_file.createNewFile();
-							FileOutputStream fos = new FileOutputStream(certificate_file);
-							fos.write(certificado.getEncoded());
-							fos.close();
-							outStream.writeObject(true);
-						} else {
-							outStream.writeObject(false);
-						}
-
-					} else {
-						FileInputStream fis = new FileInputStream(fileReaderH.getCertificateName(userID));
-						Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(fis);
-
-						this.public_key = certificado.getPublicKey();
-
-						SignedObject signedObject = (SignedObject) inStream.readObject();
-						Signature signature = Signature.getInstance("MD5withRSA");
-
-						outStream.writeObject(signedObject.verify(public_key, signature));
+					if (nonce != this.nonce) {
+						outStream.writeObject(false);
 					}
+
+					byte[] ceritficado_byte = (byte[]) inStream.readObject();
+					Certificate certificado = CertificateFactory.getInstance("X.509")
+							.generateCertificate(new ByteArrayInputStream(ceritficado_byte));
+
+					this.public_key = certificado.getPublicKey();
+
+					SignedObject signedObject = (SignedObject) inStream.readObject();
+					Signature signature = Signature.getInstance("MD5withRSA");
+
+					boolean verify = signedObject.verify(public_key, signature);
+
+					if (verify) {
+						File certificate_file = new File("certificates/" + userID + ".cer");
+						certificate_file.createNewFile();
+						FileOutputStream fos = new FileOutputStream(certificate_file);
+						fos.write(certificado.getEncoded());
+						fos.close();
+						outStream.writeObject(true);
+					} else {
+						outStream.writeObject(false);
+					}
+
+				} else {
+					FileInputStream fis = new FileInputStream(fileReaderH.getCertificateName(userID));
+					Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(fis);
+
+					this.public_key = certificado.getPublicKey();
+
+					SignedObject signedObject = (SignedObject) inStream.readObject();
+					Signature signature = Signature.getInstance("MD5withRSA");
+
+					outStream.writeObject(signedObject.verify(public_key, signature));
+				}
 
 				System.out.println("Login successful!");
 				outStream.writeObject(true);
 
 				// create user folder and its files with their default values
-					fileWriterH.createUserFolderAndFiles(user);
+				fileWriterH.createUserFolderAndFiles(user);
 				userInteraction();
 				inStream.close();
 				outStream.close();
@@ -314,7 +309,7 @@ public class TintolmarketServer {
 
 					// save the image in the user folder
 					fileWriterH.saveImage(image, wineName, imageFormat, user);
-					
+
 					Wine wine = new Wine(wineName, DEFAULT_PRICE, DEFAULT_QUANTITY, DEFAULT_RATING,
 							user.getName(), DEFAULT_IS_FOR_SALE, imageFormat);
 					fileWriterH.addWineToUser(user, wine);
@@ -387,17 +382,18 @@ public class TintolmarketServer {
 					sendImage(wine);
 				}
 
-				
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
 		}
-		
-		private void sendImage(Wine wine) throws IOException{
+
+		private void sendImage(Wine wine) throws IOException {
 			// Read image
-			File file = new File("user_data/" + wine.getSellerName() + "/images/" + wine.getName() + "." + wine.getImageFormat());
+			File file = new File(
+					"user_data/" + wine.getSellerName() + "/images/" + wine.getName() + "." + wine.getImageFormat());
 			// Send the name of the image with the seller name and the format
-			outStream.writeObject(wine.getName() + " FROM SELLER " + wine.getSellerName() + " ." + wine.getImageFormat());
+			outStream.writeObject(
+					wine.getName() + " FROM SELLER " + wine.getSellerName() + " ." + wine.getImageFormat());
 			// Send the image
 			byte[] image = new byte[(int) file.length()];
 			DataInputStream dis = new DataInputStream(new FileInputStream(file));
