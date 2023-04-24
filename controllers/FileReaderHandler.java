@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import domain.User;
 import domain.Wine;
@@ -15,13 +16,14 @@ import domain.Message;
 public class FileReaderHandler {
 
     private final String LOGIN_FILE = "login.txt";
+    private final String CERTIFICATES_FOLDER = "certificates";
     private final String USER_DATA_FOLDER = "user_data";
     private final String USER_FILE = "User.txt";
     private final String WINE_FILE = "Wine.txt";
     private final String MESSAGE_FILE = "Message.txt";
 
-    public HashMap<String, User> readUsers() {
-        HashMap<String, User> users = new HashMap<>();
+    public ConcurrentHashMap<String, User> readUsers() {
+        ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
 
         // get all folders from user_data directory
         File folder = new File(USER_DATA_FOLDER);
@@ -116,15 +118,15 @@ public class FileReaderHandler {
     /*
      * Check if the username and password match by reading the LOGIN_FILE file
      */
-    public int clientLogin(String user, String pass) {
+    public int clientLogin(String clientID, String public_key) {
         File file = new File(LOGIN_FILE);
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
-                if (parts[0].equals(user) && parts[1].equals(pass)) {
+                if (parts[0].equals(clientID) && parts[1].equals(public_key)) {
                     return 1;
-                } else if (parts[0].equals(user) && !parts[1].equals(pass)) {
+                } else if (parts[0].equals(clientID) && !parts[1].equals(public_key)) {
                     return 0;
                 }
             }
@@ -132,5 +134,25 @@ public class FileReaderHandler {
             System.out.println("Erro ao ler o arquivo login.txt: " + e.getMessage());
         }
         return -1;
+    }
+
+    public boolean userExists(String userID) {
+        File folder = new File(USER_DATA_FOLDER);
+        if (folder.isDirectory()) {
+            File[] folders = folder.listFiles();
+            for (File f : folders) {
+                if (f.isDirectory()) {
+                    if (f.getName().equals(userID)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
+    public String getCertificateName(String userID) {
+        return null;
     }
 }

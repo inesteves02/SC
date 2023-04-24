@@ -7,8 +7,18 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.security.SignedObject;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Scanner;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.security.sasl.AuthenticationException;
 
 public class Tintolmarket {
 
@@ -44,30 +54,52 @@ public class Tintolmarket {
             String trustStore = args[1];
             String keyStore = args[2];
             String passwordKeyStore = args[3];
-            String username = args[4];
+            String userID = args[4];
 
-            sc = new Scanner(System.in);
+            System.setProperty("javax.net.ssl.trustStore", trustStore);
+            System.setProperty("javax.net.ssl.keyStore", keyStore);
+            System.setProperty("javax.net.ssl.keyStorePassword", passwordKeyStore);
+            System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
-            String password;
+            SocketFactory sf = SSLSocketFactory.getDefault();
+            SSLSocket clientSocket = (SSLSocket) sf.createSocket(serverAddress, port);
 
-//            if (args.length == 2) {
-                System.out.println("Insert password: ");
-                password = sc.nextLine();
-//            } else {
-//                password = args[2];
-//            }
-
-            Socket clientSocket = new Socket(serverAddress, port);
             in = new ObjectInputStream(clientSocket.getInputStream());
             out = new ObjectOutputStream(clientSocket.getOutputStream());
 
-            if (clientLogin(username, password)) {
-                System.out.println("Login successful\n");
-                clientInteraction();
+            System.out.println("Authenticating user " + userID + "...\n");
+            out.writeObject((String) userID);
+
+            Long nonce = (Long) in.readObject();
+
+            boolean authenticated = (boolean) in.readObject();
+
+            FileInputStream fis = new FileInputStream(keyStore);
+            KeyStore ks = KeyStore.getInstance("JKS");
+            ks.load(fis, passwordKeyStore.toCharArray());
+
+            Certificate cert = ks.getCertificate(userID);
+
+            PrivateKey privateKey = (PrivateKey) ks.getKey(userID, passwordKeyStore.toCharArray());
+
+            SignedObject sig = new SignedObject(nonce, privateKey, Signature.getInstance("MD5withRSA"));
+
+            if (authenticated) {
+                out.writeObject(sig);
             } else {
-                System.out.println("Login failed\n");
+                out.writeObject(nonce);
+                out.writeObject(cert.getEncoded());
+                out.writeObject(sig);
             }
 
+            authenticated = (boolean) in.readObject();
+            if (authenticated) {
+                System.out.println("User authenticated successfully.\n");
+            } else {
+                throw new AuthenticationException(userID + " authentication failed.");
+            }
+            
+            clientInteraction();
             in.close();
             out.close();
             sc.close();
@@ -76,22 +108,6 @@ public class Tintolmarket {
             System.err.println("Cannot connect to the server.");
         }
 
-    }
-
-    // sends the client's username and password to TintoImarketServer
-    private static boolean clientLogin(String username, String password) {
-        try {
-
-            out.writeObject(username);
-            out.writeObject(password);
-
-            return (boolean) in.readObject();
-
-        } catch (Exception e) {
-            System.err.println("Error.\n");
-            e.printStackTrace();
-            return false;
-        }
     }
 
     private static void clientInteraction() {

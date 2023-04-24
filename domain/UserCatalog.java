@@ -3,13 +3,14 @@ package domain;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class UserCatalog {
     
-    private HashMap<String, User> users;
+    private ConcurrentHashMap<String, User> users;
 
-    public UserCatalog(HashMap<String, User> users) {
+    public UserCatalog(ConcurrentHashMap<String, User> users) {
         this.users = users;
     }
 
@@ -17,7 +18,7 @@ public class UserCatalog {
         return users.get(name);
     }
 
-    public synchronized void addUser(String name) {
+    public void addUser(String name) {
         users.put(name, new User(name, 200, new HashMap<String, Wine>(), new ArrayList<Message>()));
     }
 
@@ -28,7 +29,11 @@ public class UserCatalog {
             .collect(Collectors.toList());
     }
 
-    public HashMap<String, User> getUsers() {
+    public ConcurrentHashMap<String, User> getUsers() {
         return users;
+    }
+
+    public boolean existUser(String userID){
+        return users.containsKey(userID);
     }
 }

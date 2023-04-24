@@ -1,6 +1,7 @@
 package domain;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -10,7 +11,7 @@ public class WineCatalog {
 
     public WineCatalog(UserCatalog userCatalog) {
 
-        wines = new ArrayList<Wine>();
+        wines = Collections.synchronizedList(new ArrayList<Wine>());
         
         //Encontra todos os vinhos dos usuários e os adiciona ao hashmap
         for (User user : userCatalog.getUsers().values()) {

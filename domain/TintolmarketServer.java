@@ -3,18 +3,39 @@ package domain;
 import controllers.FileReaderHandler;
 import controllers.FileWriterHandler;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.SignedObject;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+
 public class TintolmarketServer {
+
 
 	private static FileReaderHandler fileReaderH; // Declare FileReaderHandler object
 	private static FileWriterHandler fileWriterH; // Declare FileWriterHandler object
@@ -36,16 +57,50 @@ public class TintolmarketServer {
 	 * and then calls the startServer() method on the TintolmarketServer instance.
 	 */
 	public static void main(String[] args) {
+
+		
+		String keyStoreName;
+		String keyStorePassword;
+		String cifraPassword;
+
 		System.out.println("Server is starting...");
-		int socket;
-		if (args.length == 1) {
-			socket = Integer.parseInt(args[0]);
+
+		int port;
+
+		if (args.length == 4) {
+			port = Integer.parseInt(args[0]);
+			cifraPassword = args[1];
+			keyStoreName = args[2];
+			keyStorePassword = args[3];
+
 		} else {
-			socket = 12345;
+			port = 12345;
+			cifraPassword = args[0];
+			keyStoreName = args[1];
+			keyStorePassword = args[2];
 		}
+
+		System.setProperty("javax.net.ssl.keyStore", keyStoreName);
+		System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+		
 		TintolmarketServer server = new TintolmarketServer();
 		server.init();
-		server.startServer(socket);
+
+		SecretKey chave = EncryptUtils.generateKey(cifraPassword);
+		Cipher cifra = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
+
+		//Sockets SSL
+		ServerSocketFactory ssf = SSLServerSocketFactory.getDefault( );
+		SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(port);
+
+		//Vai buscar o keystore do servidor
+		FileInputStream keyFile = new FileInputStream(keyStoreName);
+		KeyStore keyStore = KeyStore.getInstance("JKS");
+		keyStore.load(keyFile, keyStorePassword.toCharArray());
+		//Vai buscar a chave privada do servidor
+		PrivateKey privKey = (PrivateKey) keyStore.getKey("TintolmarketServer", keyStorePassword.toCharArray());
+
+		server.startServer(port);
 	}
 
 	private void init() {
@@ -55,11 +110,11 @@ public class TintolmarketServer {
 		wineCatalog = new WineCatalog(userCatalog);
 	}
 
-	public void startServer(int socket) {
-		ServerSocket serverSocket = null;
+	public void startServer(int port) {
+		ServerSocket serverport = null;
 
 		try {
-			serverSocket = new ServerSocket(socket);
+			serverport = new ServerSocket(port);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.exit(-1);
@@ -67,7 +122,7 @@ public class TintolmarketServer {
 
 		while (true) {
 			try {
-				Socket inSoc = serverSocket.accept();
+				Socket inSoc = serverport.accept();
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
 			} catch (IOException e) {
@@ -85,18 +140,20 @@ public class TintolmarketServer {
 		private Socket socket = null;
 		private ObjectOutputStream outStream;
 		private ObjectInputStream inStream;
+		private PublicKey public_key;
 		private User user;
+		private long nonce;
 
 		ServerThread(Socket inSoc) throws IOException {
 			this.socket = inSoc;
+			nonce = new Random().nextLong();
 			outStream = new ObjectOutputStream(socket.getOutputStream());
 			inStream = new ObjectInputStream(socket.getInputStream());
-			System.out.println("Client connected!");
 		}
 
 		/*
 		 * This code creates an ObjectOutputStream object and an ObjectInputStream
-		 * object from the socket's input and output streams.
+		 * object from the port's input and output streams.
 		 * It then reads the username and password from the client and calls the
 		 * clientLogin() method of the FileReaderHandler object.
 		 * If the login is successful, it prints "Login successful!" to the console.
@@ -104,37 +161,61 @@ public class TintolmarketServer {
 		 * If the user is not found, it prints "User not found! Creating new user..." to
 		 * the console and calls the addUser() method of the FileWriterHandler object.
 		 */
-		public synchronized void run() {
+		public void run() {
 			try {
-				String username = (String) inStream.readObject();
-				String password = (String) inStream.readObject();
+				System.out.println("Client connected! Waiting for authentication...");
+				String userID = (String) inStream.readObject();
 
-				synchronized (this) {
-					int login = fileReaderH.clientLogin(username, password);
-					if (login == 0) {
-						System.out.println("Client " + user + " tried to login with wrong password! Disconnecting...");
-						outStream.writeBoolean(false);
-						outStream.close();
-						inStream.close();
-						socket.close();
-						return;
-					} else if (login == -1) {
-						System.out.println("User not found! Creating new user...");
-						fileWriterH.addUser(username, password);
-						userCatalog.addUser(username);
-						user = userCatalog.getUser(username);
+					outStream.writeObject(nonce);
+					outStream.flush();
+					boolean existUser = userCatalog.existUser(userID);
+
+					if (!existUser){
+
+						long nonce = (long) inStream.readObject();
+
+						if (nonce != this.nonce){
+							outStream.writeObject(false);
+						}
+
+						byte[] ceritficado_byte = (byte[]) inStream.readObject();
+						Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(ceritficado_byte));
+
+						this.public_key = certificado.getPublicKey();
+
+						SignedObject signedObject = (SignedObject) inStream.readObject();
+						Signature signature = Signature.getInstance("MD5withRSA");
+
+						boolean verify = signedObject.verify(public_key, signature);
+
+						if (verify){
+							File certificate_file = new File("certificates/" + userID + ".cer");
+							certificate_file.createNewFile();
+							FileOutputStream fos = new FileOutputStream(certificate_file);
+							fos.write(certificado.getEncoded());
+							fos.close();
+							outStream.writeObject(true);
+						} else {
+							outStream.writeObject(false);
+						}
+
 					} else {
-						user = userCatalog.getUser(username);
+						FileInputStream fis = new FileInputStream(fileReaderH.getCertificateName(userID));
+						Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(fis);
+
+						this.public_key = certificado.getPublicKey();
+
+						SignedObject signedObject = (SignedObject) inStream.readObject();
+						Signature signature = Signature.getInstance("MD5withRSA");
+
+						outStream.writeObject(signedObject.verify(public_key, signature));
 					}
-				}
 
 				System.out.println("Login successful!");
 				outStream.writeObject(true);
 
 				// create user folder and its files with their default values
-				synchronized (this) {
 					fileWriterH.createUserFolderAndFiles(user);
-				}
 				userInteraction();
 				inStream.close();
 				outStream.close();
@@ -143,10 +224,20 @@ public class TintolmarketServer {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
+			} catch (CertificateException e) {
+				e.printStackTrace();
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+			} catch (InvalidKeyException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SignatureException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 
-		private synchronized void userInteraction() throws IOException {
+		private void userInteraction() throws IOException {
 
 			String userInput = "";
 
