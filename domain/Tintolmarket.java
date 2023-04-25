@@ -61,6 +61,7 @@ public class Tintolmarket {
             System.setProperty("javax.net.ssl.keyStorePassword", passwordKeyStore);
             System.setProperty("javax.net.ssl.trustStorePassword", "password");
 
+            //used to create a SSLSocket for secure socket communication over a network
             SocketFactory sf = SSLSocketFactory.getDefault();
             SSLSocket clientSocket = (SSLSocket) sf.createSocket(serverAddress, port);
 
@@ -68,32 +69,45 @@ public class Tintolmarket {
             out = new ObjectOutputStream(clientSocket.getOutputStream());
 
             System.out.println("Authenticating user " + userID + "...\n");
+            //sends the user id to the server
             out.writeObject((String) userID);
 
             Long nonce = (Long) in.readObject();
 
+            //checks id the client is authenticated (readObject is a boolean wether it is or not)
             boolean authenticated = (boolean) in.readObject();
 
+
+            //creates an object and initializes it with the path of a keystore file
             FileInputStream fis = new FileInputStream(keyStore);
+            // jks  = java key store and creates an KeyStore that type
             KeyStore ks = KeyStore.getInstance("JKS");
+            // loads the keyStoreFile into the ks object
             ks.load(fis, passwordKeyStore.toCharArray());
 
+            //certificate of user
             Certificate cert = ks.getCertificate(userID);
 
+            //privateKey from the keyStore
             PrivateKey privateKey = (PrivateKey) ks.getKey(userID, passwordKeyStore.toCharArray());
 
+            //signs nonce
             SignedObject sig = new SignedObject(nonce, privateKey, Signature.getInstance("MD5withRSA"));
 
             if (authenticated) {
+                //sends the nonce signed
                 out.writeObject(sig);
             } else {
+                //sends the nonce
                 out.writeObject(nonce);
+                //sends the certificate with the publicKey
                 out.writeObject(cert.getEncoded());
+                //sends the nonce signed
                 out.writeObject(sig);
             }
 
-            authenticated = (boolean) in.readObject();
-            if (authenticated) {
+            boolean authenticationSucessful = (boolean) in.readObject();
+            if (authenticationSucessful) {
                 System.out.println("User authenticated successfully.\n");
             } else {
                 throw new AuthenticationException(userID + " authentication failed.");
