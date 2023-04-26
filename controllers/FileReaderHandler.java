@@ -9,9 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+
+import domain.Message;
 import domain.User;
 import domain.Wine;
-import domain.Message;
 
 public class FileReaderHandler {
 
@@ -21,6 +24,9 @@ public class FileReaderHandler {
     private final String USER_FILE = "User.txt";
     private final String WINE_FILE = "Wine.txt";
     private final String MESSAGE_FILE = "Message.txt";
+
+    private SecretKey key;
+    private Cipher cipher;
 
     public ConcurrentHashMap<String, User> readUsers() {
         ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
@@ -53,7 +59,6 @@ public class FileReaderHandler {
         }
     }
 
-    
     private String readBalanceFromFile(String filepath) {
         String balance = null;
         try (BufferedReader reader = new BufferedReader(new FileReader(filepath))) {
@@ -64,13 +69,13 @@ public class FileReaderHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
         return balance;
     }
-    
+
     /*
-    * Read wine data from file
-    */
+     * Read wine data from file
+     */
     private HashMap<String, Wine> readWinesFromFile(String filepath) {
         HashMap<String, Wine> wines = new HashMap<>();
         try {
@@ -79,17 +84,17 @@ public class FileReaderHandler {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(":");
                 Wine wine = new Wine(parts[0], Double.parseDouble(parts[1]), Integer.parseInt(parts[2]),
-                Double.parseDouble(parts[3]), parts[4], Boolean.parseBoolean(parts[5]), parts[6]);
+                        Double.parseDouble(parts[3]), parts[4], Boolean.parseBoolean(parts[5]), parts[6]);
                 wines.put(parts[0], wine);
             }
-            
+
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return wines;
     }
-    
+
     private List<Message> readMessagesFromFile(String filename) {
         // List of messages to return
         List<Message> messages = new ArrayList<>();
@@ -151,8 +156,15 @@ public class FileReaderHandler {
         return false;
     }
 
-
     public String getCertificateName(String userID) {
         return null;
+    }
+
+    public void setKey(SecretKey key) {
+        this.key = key;
+    }
+
+    public void setCipher(Cipher cipher) {
+        this.cipher = cipher;
     }
 }

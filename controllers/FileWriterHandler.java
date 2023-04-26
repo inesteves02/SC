@@ -1,8 +1,5 @@
 package controllers;
 
-import domain.Message;
-import domain.User;
-import domain.Wine;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,6 +14,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+
+import domain.Message;
+import domain.User;
+import domain.Wine;
+
 public class FileWriterHandler {
 
     private final String LOGIN_FILE = "login.txt";
@@ -26,6 +30,9 @@ public class FileWriterHandler {
     private final String WINE_FILE = "Wine.txt";
     private final String MESSAGE_FILE = "Message.txt";
     private final String COLON_DELIMITER = ":";
+
+    private SecretKey key;
+    private Cipher cipher;
 
     public FileWriterHandler() {
         createVerifyLoginTxt();
@@ -100,17 +107,19 @@ public class FileWriterHandler {
     }
 
     public synchronized void addWineToUser(User user, Wine wine) {
-    Path path = Paths.get(USER_DATA_FOLDER, user.getName());
-    File wineFile = new File(path.toString(), WINE_FILE);
+        Path path = Paths.get(USER_DATA_FOLDER, user.getName());
+        File wineFile = new File(path.toString(), WINE_FILE);
 
-    try {
-        FileWriter writer = new FileWriter(wineFile, true);
-        writer.write(wine.getName() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity() + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER + wine.isForSale() + COLON_DELIMITER + wine.getImageFormat() + "\n");
-        writer.close();
-    } catch (IOException e) {
-        e.printStackTrace();
+        try {
+            FileWriter writer = new FileWriter(wineFile, true);
+            writer.write(wine.getName() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity()
+                    + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER
+                    + wine.isForSale() + COLON_DELIMITER + wine.getImageFormat() + "\n");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-}
 
     public synchronized void updateWine(User user, Wine wine) throws IOException {
         Path path = Paths.get(USER_DATA_FOLDER, user.getName());
@@ -129,7 +138,10 @@ public class FileWriterHandler {
             String[] wineData = wines.get(i).split(COLON_DELIMITER);
             if (wineData[0].equals(wine.getName())) {
                 // Update the wine data
-                wines.set(i, wine.getName() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity() + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName() + COLON_DELIMITER + wine.isForSale() + COLON_DELIMITER + wine.getImageFormat());
+                wines.set(i,
+                        wine.getName() + COLON_DELIMITER + wine.getPrice() + COLON_DELIMITER + wine.getQuantity()
+                                + COLON_DELIMITER + wine.getRating() + COLON_DELIMITER + user.getName()
+                                + COLON_DELIMITER + wine.isForSale() + COLON_DELIMITER + wine.getImageFormat());
                 guard = true;
             }
         }
@@ -156,7 +168,8 @@ public class FileWriterHandler {
         try {
             FileWriter writer = new FileWriter(path.toFile(), true);
             BufferedWriter bw = new BufferedWriter(writer);
-            bw.write(message.getSender() + COLON_DELIMITER + message.getReceiver() + COLON_DELIMITER + message.getMessage() + "\n");
+            bw.write(message.getSender() + COLON_DELIMITER + message.getReceiver() + COLON_DELIMITER
+                    + message.getMessage() + "\n");
             bw.close();
             writer.close();
         } catch (IOException e) {
@@ -195,5 +208,13 @@ public class FileWriterHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setKey(SecretKey key) {
+        this.key = key;
+    }
+
+    public void setCipher(Cipher cipher) {
+        this.cipher = cipher;
     }
 }
