@@ -53,10 +53,7 @@ public class TintolmarketServer {
 				keyStorePassword = args[2];
 			}
 
-			// specifies the path and name of the keystore file that contains the server's
-			// private key and its corresponding certificate chain
 			System.setProperty("javax.net.ssl.keyStore", keyStoreName);
-			// specifies the password used to protect the keystore file
 			System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 
 			TintolmarketServer server = new TintolmarketServer();
@@ -75,7 +72,7 @@ public class TintolmarketServer {
 
 			// Sockets SSL
 			ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
-			SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(12345);
+			SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(port);
 
 			// Vai buscar o keystore do servidor
 			FileInputStream keyFile = new FileInputStream(keyStoreName);
