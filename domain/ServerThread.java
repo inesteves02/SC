@@ -74,7 +74,9 @@ public class ServerThread extends Thread {
 
             outStream.writeObject(nonce);
             outStream.flush();
+
             boolean existUser = userCatalog.existUser(userID);
+            outStream.writeObject(existUser);
 
             if (!existUser) {
 

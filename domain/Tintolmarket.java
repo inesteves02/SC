@@ -4,13 +4,16 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignedObject;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -59,7 +62,7 @@ public class Tintolmarket {
             System.setProperty("javax.net.ssl.trustStore", trustStore);
             System.setProperty("javax.net.ssl.keyStore", keyStore);
             System.setProperty("javax.net.ssl.keyStorePassword", passwordKeyStore);
-            System.setProperty("javax.net.ssl.trustStorePassword", "password");
+            // System.setProperty("javax.net.ssl.trustStorePassword", "servidor");
 
             // used to create a SSLSocket for secure socket communication over a network
             SocketFactory sf = SSLSocketFactory.getDefault();
@@ -100,10 +103,10 @@ public class Tintolmarket {
             } else {
                 // sends the nonce
                 out.writeObject(nonce);
-                // sends the certificate with the publicKey
-                out.writeObject(cert.getEncoded());
                 // sends the nonce signed
                 out.writeObject(sig);
+                // sends the certificate with the publicKey
+                out.writeObject(cert.getEncoded());
             }
 
             boolean authenticationSucessful = (boolean) in.readObject();
@@ -118,8 +121,16 @@ public class Tintolmarket {
             out.close();
             sc.close();
             clientSocket.close();
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.err.println("Cannot connect to the server.");
+        } catch (ClassNotFoundException e) {
+            System.err.println("Cannot recieve data from the server.");
+        } catch (CertificateEncodingException e) {
+            System.err.println("Cannot encode certificate.");
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("Cannot find algorithm.");
+        } catch (Exception e) {
+            System.err.println("Error.");
         }
 
     }

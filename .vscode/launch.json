@@ -15,7 +15,8 @@
             "name": "Tintolmarket",
             "request": "launch",
             "mainClass": "domain.Tintolmarket",
-            "projectName": "SC_18ce4d8d"
+            "projectName": "SC_18ce4d8d",
+            "args": "localhost:12345 truststore.client keystore.Vasco servidor Vasco"
         },
         {
             "type": "java",

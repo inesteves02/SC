@@ -55,7 +55,7 @@ public class TintolmarketServer {
 
 			System.setProperty("javax.net.ssl.keyStore", keyStoreName);
 			System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-			System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
+			// System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
 
 			TintolmarketServer server = new TintolmarketServer();
 			server.init();
