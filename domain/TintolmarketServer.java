@@ -1,8 +1,9 @@
 package domain;
 
-import java.io.FileInputStream;
+import java.io.*;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -13,6 +14,8 @@ import javax.net.ssl.SSLServerSocketFactory;
 import controllers.FileReaderHandler;
 import controllers.FileWriterHandler;
 import encrypt.EncryptMethods;
+
+
 
 public class TintolmarketServer {
 
@@ -56,7 +59,38 @@ public class TintolmarketServer {
 			System.setProperty("javax.net.ssl.keyStore", keyStoreName);
 			System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 			System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
-			// FAZER OS LOGSSS.txt
+
+
+			//FAZER LOGSS
+			Log current = null;
+			File f = new File("logs.txt");
+
+
+			if(f.exists()) {
+				FileInputStream inputFileLog = new FileInputStream("logs.txt");
+				ObjectInputStream inputObjLog = new ObjectInputStream(inputFileLog);
+				current = (Log) inputObjLog.readObject();
+				inputObjLog.close();
+				inputFileLog.close();
+			}
+			else {
+				byte[] startBytes = new byte[32];
+				String startString = Base64.getEncoder().encodeToString(startBytes);
+				current = new Log();
+				current.writeToLog(startString + "\n"); //Escreve os 32 bytes a zero
+				current.writeToLog(current.getBlockNumber() + "\n"); //Escreve o nr do bloco
+				current.writeToLog( current.getNrTrans() + "\n"); // Escreve o nr de transações
+				current.setPrevHash(startString); //associa hash do bloco anterior a este log
+
+
+				FileOutputStream outputFileLog = new FileOutputStream("logs.txt");
+				ObjectOutputStream outputObjLog = new ObjectOutputStream(outputFileLog);
+				outputObjLog.writeObject(current);
+				outputFileLog.close();
+				outputObjLog.close();
+
+			}
+
 
 			SecretKey key = EncryptMethods.generateSecretKey(cifraPassword);
 			Cipher cipher = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
