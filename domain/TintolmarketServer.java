@@ -55,21 +55,14 @@ public class TintolmarketServer {
 
 			System.setProperty("javax.net.ssl.keyStore", keyStoreName);
 			System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
-			// System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
-
-			TintolmarketServer server = new TintolmarketServer();
-			server.init();
-
+			System.setProperty("javax.net.ssl.keyStoreType", "JCEKS");
 			// FAZER OS LOGSSS.txt
 
 			SecretKey key = EncryptMethods.generateSecretKey(cifraPassword);
 			Cipher cipher = Cipher.getInstance("PBEWithHmacSHA256AndAES_128");
 
-			fileReaderH.setKey(key);
-			fileReaderH.setCipher(cipher);
-
-			fileWriterH.setKey(key);
-			fileWriterH.setCipher(cipher);
+			TintolmarketServer server = new TintolmarketServer();
+			server.init(cipher, key);
 
 			// Sockets SSL
 			ServerSocketFactory ssf = SSLServerSocketFactory.getDefault();
@@ -92,9 +85,9 @@ public class TintolmarketServer {
 		}
 	}
 
-	private void init() {
-		fileReaderH = new FileReaderHandler();
-		fileWriterH = new FileWriterHandler();
+	private void init(Cipher cipher, SecretKey key) throws Exception {
+		fileReaderH = new FileReaderHandler(cipher, key);
+		fileWriterH = new FileWriterHandler(cipher, key);
 		userCatalog = new UserCatalog(fileReaderH.readUsers());
 		wineCatalog = new WineCatalog(userCatalog);
 	}

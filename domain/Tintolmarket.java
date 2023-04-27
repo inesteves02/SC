@@ -103,10 +103,10 @@ public class Tintolmarket {
             } else {
                 // sends the nonce
                 out.writeObject(nonce);
-                // sends the nonce signed
-                out.writeObject(sig);
                 // sends the certificate with the publicKey
                 out.writeObject(cert.getEncoded());
+                // sends the nonce signed
+                out.writeObject(sig);
             }
 
             boolean authenticationSucessful = (boolean) in.readObject();
@@ -140,6 +140,7 @@ public class Tintolmarket {
             System.out.println(HELP);
 
             String input;
+            sc = new Scanner(System.in);
 
             do {
                 input = sc.nextLine();

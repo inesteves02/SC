@@ -28,6 +28,11 @@ public class FileReaderHandler {
     private SecretKey key;
     private Cipher cipher;
 
+    public FileReaderHandler(Cipher cipher, SecretKey key) throws Exception {
+        this.cipher = cipher;
+        this.key = key;
+    }
+
     public ConcurrentHashMap<String, User> readUsers() {
         ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
 
@@ -121,7 +126,7 @@ public class FileReaderHandler {
     }
 
     /*
-     * Check if the username and password match by reading the LOGIN_FILE file
+     * Check if the username and public_key match by reading the LOGIN_FILE file
      */
     public int clientLogin(String clientID, String public_key) {
         File file = new File(LOGIN_FILE);
@@ -157,6 +162,17 @@ public class FileReaderHandler {
     }
 
     public String getCertificateName(String userID) {
+        File folder = new File(CERTIFICATES_FOLDER);
+        if (folder.isDirectory()) {
+            File[] files = folder.listFiles();
+            for (File f : files) {
+                if (f.isFile()) {
+                    if (f.getName().equals(userID + ".cer")) {
+                        return f.getName();
+                    }
+                }
+            }
+        }
         return null;
     }
 

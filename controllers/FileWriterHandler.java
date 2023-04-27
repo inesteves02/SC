@@ -20,11 +20,13 @@ import javax.crypto.SecretKey;
 import domain.Message;
 import domain.User;
 import domain.Wine;
+import encrypt.EncryptMethods;
 
 public class FileWriterHandler {
 
-    private final String LOGIN_FILE = "login.txt";
+    private final String LOGIN_FILE = "login.enc";
     private final String USER_DATA_FOLDER = "user_data";
+    private final String CERTIFICATES_FOLDER = "certificates";
     private final String IMAGE_FOLDER = "images";
     private final String USER_FILE = "User.txt";
     private final String WINE_FILE = "Wine.txt";
@@ -34,30 +36,53 @@ public class FileWriterHandler {
     private SecretKey key;
     private Cipher cipher;
 
-    public FileWriterHandler() {
+    public FileWriterHandler(Cipher cipher, SecretKey key) throws Exception {
+        this.cipher = cipher;
+        this.key = key;
         createVerifyLoginTxt();
         createUserFolder();
+        createCredentialsFolder();
     }
 
-    private void createVerifyLoginTxt() {
+    private void createCredentialsFolder() {
+        Path path = Paths.get(CERTIFICATES_FOLDER);
+        try {
+            if (!Files.exists(path)) {
+                Files.createDirectory(path);
+            }
+        } catch (IOException e) {
+            System.out.println("Error creating certificate folder: " + e.getMessage());
+        }
+    }
+
+    private void createVerifyLoginTxt() throws Exception {
         File file = new File(LOGIN_FILE);
         try {
             if (file.createNewFile()) {
-                System.out.println("The file login.txt was created.");
+                System.out.println("The file login.enc was created.");
             } else {
-                System.out.println("The file login.txt already exists.");
+                System.out.println("The file login.enc already exists.");
             }
         } catch (IOException e) {
-            System.out.println("Error creating login.txt: " + e.getMessage());
+            System.out.println("Error creating login.enc: " + e.getMessage());
         }
     }
 
-    public synchronized void addUser(String user, String pass) {
-        try (FileWriter writer = new FileWriter(LOGIN_FILE, true)) {
-            writer.write(user + COLON_DELIMITER + pass + "\n");
-        } catch (IOException e) {
-            System.err.println("Error writing to login.txt: " + e.getMessage());
+    public synchronized void addUser(String userID, String public_key_path) {
+
+        List<String> loginData;
+
+        try {
+
+            loginData = EncryptMethods.decryptFile(this.key, this.cipher, LOGIN_FILE);
+            loginData.add(userID + COLON_DELIMITER + public_key_path);
+
+            EncryptMethods.encryptFile(this.key, this.cipher, loginData, LOGIN_FILE);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
     }
 
     public void createUserFolder() {
@@ -208,13 +233,5 @@ public class FileWriterHandler {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void setKey(SecretKey key) {
-        this.key = key;
-    }
-
-    public void setCipher(Cipher cipher) {
-        this.cipher = cipher;
     }
 }

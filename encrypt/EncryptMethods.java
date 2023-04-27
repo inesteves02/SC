@@ -1,14 +1,18 @@
 package encrypt;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.AlgorithmParameters;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -30,43 +34,30 @@ public class EncryptMethods {
         return null;
     }
 
-    public static void encryptFile(SecretKey key, Cipher cipher, String file) throws Exception {
+    public static void encryptFile(SecretKey key, Cipher cipher, List<String> data, String outputFileName)
+            throws Exception {
 
-        FileInputStream inputStream = null;
         FileOutputStream outputStream = null;
 
         try {
-            // Create streams for reading the input file and writing the output file
-            inputStream = new FileInputStream(file);
-            outputStream = new FileOutputStream(file + ".enc");
+            // Initialize the cipher for encryption
+            cipher.init(Cipher.ENCRYPT_MODE, key);
 
-            // Wrap the output stream with a CipherOutputStream to encrypt the data
-            CipherOutputStream cipherOutputStream = new CipherOutputStream(outputStream, cipher);
+            // Open the output file stream
+            outputStream = new FileOutputStream(outputFileName);
 
-            // Encrypt the input file and write the ciphertext to the output file
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                cipherOutputStream.write(buffer, 0, bytesRead);
+            // Write each line of data to the output file stream
+            for (String line : data) {
+                byte[] encryptedLine = cipher.doFinal(line.getBytes());
+                outputStream.write(encryptedLine);
+                outputStream.write('\n');
             }
-
-            // Flush and close the CipherOutputStream to write any remaining ciphertext
-            cipherOutputStream.flush();
-            cipherOutputStream.close();
 
         } catch (Exception e) {
             throw new Exception("Error encrypting file: " + e.getMessage(), e);
 
         } finally {
-            // Close the input and output streams
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    // Log a warning message but don't throw an exception
-                    System.out.println("Warning: could not close input stream: " + e.getMessage());
-                }
-            }
+            // Close the output stream
             if (outputStream != null) {
                 try {
                     outputStream.close();
@@ -78,35 +69,33 @@ public class EncryptMethods {
         }
     }
 
-    public static void decryptFile(SecretKey key, Cipher cipher, String inputFile, String outputFile) throws Exception {
+    public static List<String> decryptFile(SecretKey key, Cipher cipher, String inputFileName) throws Exception {
 
         FileInputStream inputStream = null;
-        FileOutputStream outputStream = null;
-        CipherInputStream cipherInputStream = null;
+        List<String> decryptedData = new ArrayList<>();
+
         try {
-            // Create streams for reading the input file and writing the output file
-            inputStream = new FileInputStream(inputFile);
-            outputStream = new FileOutputStream(outputFile);
+            AlgorithmParameters algorithm = AlgorithmParameters.getInstance("PBEWithHmacSHA256AndAES_128");
+            algorithm.init();
+            // Initialize the cipher for decryption
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            // Open the input file stream
+            inputStream = new FileInputStream(inputFileName);
 
-            // Wrap the input stream with a CipherInputStream to decrypt the data
-            cipherInputStream = new CipherInputStream(inputStream, cipher);
-
-            // Decrypt the input file and write the plaintext to the output file
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = cipherInputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
+            // Read each line of ciphertext from the input file stream and decrypt it
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                byte[] encryptedLine = line.getBytes();
+                byte[] decryptedLine = cipher.doFinal(encryptedLine);
+                decryptedData.add(new String(decryptedLine));
             }
-
-            // Flush and close the output stream to write any remaining plaintext
-            outputStream.flush();
-            outputStream.close();
 
         } catch (Exception e) {
             throw new Exception("Error decrypting file: " + e.getMessage(), e);
 
         } finally {
-            // Close the input and output streams and the CipherInputStream
+            // Close the input stream
             if (inputStream != null) {
                 try {
                     inputStream.close();
@@ -115,22 +104,24 @@ public class EncryptMethods {
                     System.out.println("Warning: could not close input stream: " + e.getMessage());
                 }
             }
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    // Log a warning message but don't throw an exception
-                    System.out.println("Warning: could not close output stream: " + e.getMessage());
-                }
-            }
-            if (cipherInputStream != null) {
-                try {
-                    cipherInputStream.close();
-                } catch (IOException e) {
-                    // Log a warning message but don't throw an exception
-                    System.out.println("Warning: could not close cipher input stream: " + e.getMessage());
-                }
-            }
         }
+
+        return decryptedData;
+    }
+
+    private static byte[] readParams(String fileName) throws IOException {
+        File f = new File(fileName);
+
+        // work only for 2GB file, because array index can only up to Integer.MAX
+
+        byte[] buffer = new byte[(int) f.length()];
+
+        FileInputStream is = new FileInputStream(fileName);
+
+        is.read(buffer);
+
+        is.close();
+
+        return buffer;
     }
 }

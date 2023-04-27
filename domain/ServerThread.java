@@ -69,8 +69,9 @@ public class ServerThread extends Thread {
             outStream.flush();
 
             boolean existUser = userCatalog.existUser(userID);
-            //server anwsers with the nonce (being an unknown user or not)
+            // server anwsers with the nonce (being an unknown user or not)
             outStream.writeObject(existUser);
+            boolean verify = false;
 
             if (!existUser) {
 
@@ -89,31 +90,30 @@ public class ServerThread extends Thread {
                 SignedObject signedObject = (SignedObject) inStream.readObject();
                 Signature signature = Signature.getInstance("MD5withRSA");
 
-                boolean verify = signedObject.verify(public_key, signature);
+                verify = signedObject.verify(public_key, signature);
 
                 // caso 2) a)
-                if (!verify) {
-                    FileWriter writer = new FileWriter("users.txt");
-                    BufferedWriter bufferedWriter = new BufferedWriter(writer);
-
-                    String textToWrite = userID +":"+public_key;
-                    bufferedWriter.write(textToWrite);
-                    bufferedWriter.newLine();
-                    //agora o ficheiro vai ter que ser cifrado pelo server
+                if (verify) {
+                    fileWriterH.addUser(userID, userID + ".cer");
+                    // agora o ficheiro vai ter que ser cifrado pelo server
                     // chave publica = nome do ficheiro que contém o certificado
-
-//                    File certificate_file = new File("certificates/" + userID + ".cer");
-//                    certificate_file.createNewFile();
-//                    FileOutputStream fos = new FileOutputStream(certificate_file);
-//                    fos.write(certificado.getEncoded());
-//                    fos.close();
-                   outStream.writeObject(true);
+                    File certificate_file = new File("certificates/" + userID + ".cer");
+                    certificate_file.createNewFile();
+                    FileOutputStream fos = new FileOutputStream(certificate_file);
+                    fos.write(certificado.getEncoded());
+                    fos.close();
+                    outStream.writeObject(true);
+                    System.out.println("Login successful!");
+                    userCatalog.addUser(userID);
+                    user = userCatalog.getUser(userID);
+                    fileWriterH.createUserFolderAndFiles(user);
 
                 } else {
                     outStream.writeObject(false);
+                    System.out.println("Login failed!");
                 }
 
-            } else { //caso 2) b)
+            } else { // caso 2) b)
                 FileInputStream fis = new FileInputStream(fileReaderH.getCertificateName(userID));
                 Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(fis);
 
@@ -122,15 +122,19 @@ public class ServerThread extends Thread {
                 SignedObject signedObject = (SignedObject) inStream.readObject();
                 Signature signature = Signature.getInstance("MD5withRSA");
 
-                outStream.writeObject(signedObject.verify(public_key, signature));
+                verify = signedObject.verify(public_key, signature);
+                outStream.writeObject(verify);
+                if (verify) {
+                    System.out.println("Login successful!");
+                    user = userCatalog.getUser(userID);
+                } else {
+                    System.out.println("Login failed!");
+                }
             }
 
-            System.out.println("Login successful!");
-            outStream.writeObject(true);
-
-            // create user folder and its files with their default values
-            fileWriterH.createUserFolderAndFiles(user);
-            userInteraction();
+            if (verify) {
+                userInteraction();
+            }
             inStream.close();
             outStream.close();
             socket.close();
