@@ -1,13 +1,6 @@
 package domain;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -76,6 +69,7 @@ public class ServerThread extends Thread {
             outStream.flush();
 
             boolean existUser = userCatalog.existUser(userID);
+            //server anwsers with the nonce (being an unknown user or not)
             outStream.writeObject(existUser);
 
             if (!existUser) {
@@ -97,18 +91,29 @@ public class ServerThread extends Thread {
 
                 boolean verify = signedObject.verify(public_key, signature);
 
-                if (verify) {
-                    File certificate_file = new File("certificates/" + userID + ".cer");
-                    certificate_file.createNewFile();
-                    FileOutputStream fos = new FileOutputStream(certificate_file);
-                    fos.write(certificado.getEncoded());
-                    fos.close();
-                    outStream.writeObject(true);
+                // caso 2) a)
+                if (!verify) {
+                    FileWriter writer = new FileWriter("users.txt");
+                    BufferedWriter bufferedWriter = new BufferedWriter(writer);
+
+                    String textToWrite = userID +":"+public_key;
+                    bufferedWriter.write(textToWrite);
+                    bufferedWriter.newLine();
+                    //agora o ficheiro vai ter que ser cifrado pelo server
+                    // chave publica = nome do ficheiro que contém o certificado
+
+//                    File certificate_file = new File("certificates/" + userID + ".cer");
+//                    certificate_file.createNewFile();
+//                    FileOutputStream fos = new FileOutputStream(certificate_file);
+//                    fos.write(certificado.getEncoded());
+//                    fos.close();
+                   outStream.writeObject(true);
+
                 } else {
                     outStream.writeObject(false);
                 }
 
-            } else {
+            } else { //caso 2) b)
                 FileInputStream fis = new FileInputStream(fileReaderH.getCertificateName(userID));
                 Certificate certificado = CertificateFactory.getInstance("X.509").generateCertificate(fis);
 
