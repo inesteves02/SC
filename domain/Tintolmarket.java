@@ -62,7 +62,6 @@ public class Tintolmarket {
             System.setProperty("javax.net.ssl.trustStore", trustStore);
             System.setProperty("javax.net.ssl.keyStore", keyStore);
             System.setProperty("javax.net.ssl.keyStorePassword", passwordKeyStore);
-            // System.setProperty("javax.net.ssl.trustStorePassword", "servidor");
 
             // used to create a SSLSocket for secure socket communication over a network
             SocketFactory sf = SSLSocketFactory.getDefault();

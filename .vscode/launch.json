@@ -9,18 +9,16 @@
             "name": "Tintolmarket",
             "request": "launch",
             "mainClass": "domain.Tintolmarket",
-            "projectName": "SC_ee00d70f", 
-            "args": "localhost:12345 truststore.client keystore.Ines servidor Ines"
-
+            "projectName": "SC_ee00d70f",
+            "args": "localhost:12345 truststore.client keystore.Vasco servidor Vasco"
         },
         {
             "type": "java",
             "name": "TintolmarketServer",
             "request": "launch",
             "mainClass": "domain.TintolmarketServer",
-            "projectName": "SC_ee00d70f", 
+            "projectName": "SC_ee00d70f",
             "args": "password keystore.server servidor"
-
         },
         {
             "type": "java",
@@ -34,7 +32,7 @@
             "request": "launch",
             "mainClass": "domain.Tintolmarket",
             "projectName": "SC_18ce4d8d",
-            "args": "localhost:12345 truststore.client keystore.Ines servidor Ines"
+            "args": "localhost:12345 truststore.client keystore.Vasco servidor Vasco"
         },
         {
             "type": "java",

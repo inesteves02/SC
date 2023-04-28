@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,6 @@ import encrypt.EncryptMethods;
 
 public class FileWriterHandler {
 
-    private final String LOGIN_FILE = "login.enc";
     private final String USER_DATA_FOLDER = "user_data";
     private final String CERTIFICATES_FOLDER = "certificates";
     private final String IMAGE_FOLDER = "images";
@@ -35,6 +35,8 @@ public class FileWriterHandler {
 
     private SecretKey key;
     private Cipher cipher;
+    private ConcurrentHashMap<String, String> users = new ConcurrentHashMap<String, String>();
+    private List<String> loginData = new ArrayList<>();
 
     public FileWriterHandler(Cipher cipher, SecretKey key) throws Exception {
         this.cipher = cipher;
@@ -56,33 +58,24 @@ public class FileWriterHandler {
     }
 
     private void createVerifyLoginTxt() throws Exception {
-        File file = new File(LOGIN_FILE);
-        try {
-            if (file.createNewFile()) {
-                System.out.println("The file login.enc was created.");
-            } else {
-                System.out.println("The file login.enc already exists.");
-            }
-        } catch (IOException e) {
-            System.out.println("Error creating login.enc: " + e.getMessage());
+
+        if (!new File("login.cif").exists()) {
+            new File("login.txt").createNewFile();
+            EncryptMethods.encrypt(this.key, this.cipher, "login.txt", new ArrayList<String>());
+        }
+
+        this.loginData = EncryptMethods.decrypt(key, cipher, "login.cif");
+
+        for (String line : loginData) {
+            String[] userArr = line.split(":");
+            users.put(userArr[0], userArr[1]);
         }
     }
 
     public synchronized void addUser(String userID, String public_key_path) {
 
-        List<String> loginData;
-
-        try {
-
-            loginData = EncryptMethods.decryptFile(this.key, this.cipher, LOGIN_FILE);
-            loginData.add(userID + COLON_DELIMITER + public_key_path);
-
-            EncryptMethods.encryptFile(this.key, this.cipher, loginData, LOGIN_FILE);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        loginData.add(userID + ":" + public_key_path);
+        EncryptMethods.encrypt(key, cipher, "login.txt", loginData);
     }
 
     public void createUserFolder() {
