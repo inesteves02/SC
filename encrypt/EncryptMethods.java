@@ -1,12 +1,14 @@
 package encrypt;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.AlgorithmParameters;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -28,8 +30,9 @@ public class EncryptMethods {
         byte[] salt = { (byte) 0xc9, (byte) 0x36, (byte) 0x78, (byte) 0x99, (byte) 0x52, (byte) 0x3e, (byte) 0xea,
                 (byte) 0xf2 };
         PBEKeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 20); // pass, salt, iterations
+        SecretKeyFactory kf;
         try {
-            SecretKeyFactory kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
+            kf = SecretKeyFactory.getInstance("PBEWithHmacSHA256AndAES_128");
             return kf.generateSecret(keySpec);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
@@ -43,15 +46,12 @@ public class EncryptMethods {
     }
 
     private static void stringArrayToFile(List<String> data, String fileName) {
-        try {
-            File f = new File(fileName);
-            f.createNewFile();
-            FileWriter myWriter = new FileWriter(fileName);
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName))) {
             for (String line : data) {
-                myWriter.write(line + "\n");
+                writer.write(line);
+                writer.newLine();
             }
-            myWriter.write("fim documento");
-            myWriter.close();
+            writer.write("EOF");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -100,7 +100,7 @@ public class EncryptMethods {
             p.init(params);
             c.init(Cipher.DECRYPT_MODE, key, p);
             fis = new FileInputStream(fileName);
-            fos = new FileOutputStream("ze.txt");
+            fos = new FileOutputStream("temp.txt");
             cos = new CipherOutputStream(fos, c);
             byte[] b = new byte[16];
             int i;
@@ -111,12 +111,10 @@ public class EncryptMethods {
             if (!res.isEmpty()) {
                 res.remove(res.size() - 1);
             }
-            System.out.println("desencriptado: " + fileName);
-            System.out.println(res);
             cos.close();
             fis.close();
             fos.close();
-            deleteFile("ze.txt");
+            deleteFile("temp.txt");
             return res;
         } catch (IOException | InvalidKeyException | NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
@@ -150,7 +148,7 @@ public class EncryptMethods {
     private static List<String> fileToStringArray() {
         List<String> res = new ArrayList<>();
         try {
-            BufferedReader reader = new BufferedReader(new FileReader("ze.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader("temp.txt"));
             String line;
             while ((line = reader.readLine()) != null) {
                 res.add(line);

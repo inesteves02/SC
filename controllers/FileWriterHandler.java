@@ -2,6 +2,7 @@ package controllers;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,7 +74,8 @@ public class FileWriterHandler {
         }
     }
 
-    public synchronized void addUser(String userID, String public_key_path) {
+    public synchronized void addUser(String userID, String public_key_path)
+            throws FileNotFoundException, IOException, NoSuchAlgorithmException {
 
         loginData.add(userID + ":" + public_key_path);
         EncryptMethods.encrypt(key, cipher, "login.txt", loginData);
