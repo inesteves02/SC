@@ -36,7 +36,8 @@ public class Tintolmarket {
             + "\tclassify <wine> <stars> - classify a wine\n "
             + "\ttalk <user> <message> - send a message to another user\n "
             + "\tread - read the messages received\n "
-            + "\texit - exit the program\n";
+            + "\texit - exit the program\n"
+            + "\tlist - list all the transactions that have been made\n";
 
     public static void main(String[] args) {
         try {

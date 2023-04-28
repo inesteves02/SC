@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -31,6 +32,7 @@ public class ServerThread extends Thread {
     private PublicKey public_key;
     private User user;
     private long nonce;
+    private PrivateKey privKey;
 
     // Declare constants for default values of wine attributes
     private static final int DEFAULT_PRICE = 0;
@@ -39,7 +41,7 @@ public class ServerThread extends Thread {
     private static final boolean DEFAULT_IS_FOR_SALE = false;
 
     ServerThread(Socket inSoc, UserCatalog userCatalog, WineCatalog wineCatalog, FileReaderHandler fileReaderH,
-            FileWriterHandler fileWriterH) throws IOException {
+            FileWriterHandler fileWriterH, PrivateKey privKey) throws IOException {
         this.socket = inSoc;
         nonce = new Random().nextLong();
         outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -48,6 +50,8 @@ public class ServerThread extends Thread {
         this.wineCatalog = wineCatalog;
         this.fileReaderH = fileReaderH;
         this.fileWriterH = fileWriterH;
+        this.privKey = privKey;
+
     }
 
     /*

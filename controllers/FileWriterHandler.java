@@ -66,7 +66,7 @@ public class FileWriterHandler {
             EncryptMethods.encrypt(this.key, this.cipher, "login.txt", new ArrayList<String>());
         }
 
-        this.loginData = EncryptMethods.decrypt(key, cipher, "login.cif");
+        this.loginData = EncryptMethods.decryptation(key, cipher, "login.cif");
 
         for (String line : loginData) {
             String[] userArr = line.split(":");
