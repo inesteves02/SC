@@ -27,6 +27,8 @@ public class Tintolmarket {
     private static ObjectInputStream in;
     private static ObjectOutputStream out;
     private static Scanner sc;
+    private static StringBuilder sb;
+    private static SignedObject sig;
     private static final String HELP = "Options available:\n"
             + "\tadd <wine> <image> - add a new wine to the catalog\n "
             + "\tsell <wine> <value> <quantity> - sell a wine from the catalog\n "
@@ -141,6 +143,7 @@ public class Tintolmarket {
 
             String input;
             sc = new Scanner(System.in);
+            sb = new StringBuilder();
 
             do {
                 input = sc.nextLine();
@@ -192,12 +195,11 @@ public class Tintolmarket {
                 out.writeObject(inputArray[2]);
                 out.writeObject(inputArray[3]);
 
-                StringBuilder sb = new StringBuilder();
                 for (String string : inputArray) {
                     sb.append(string + " ");
                 }
 
-                SignedObject sig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
+                sig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
                 out.writeObject(sig);
 
                 if ((boolean) in.readObject()) {
@@ -205,6 +207,7 @@ public class Tintolmarket {
                 } else {
                     System.out.println("Wine not added to sell");
                 }
+
                 break;
 
             case "view":
@@ -246,6 +249,14 @@ public class Tintolmarket {
                 out.writeObject(inputArray[1]);
                 out.writeObject(inputArray[2]);
                 out.writeObject(inputArray[3]);
+
+                StringBuilder sb = new StringBuilder();
+                for (String string : inputArray) {
+                    sb.append(string + " ");
+                }
+
+                sig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
+                out.writeObject(sig);
 
                 if ((boolean) in.readObject()) {
                     System.out.println("Wine bought successfully");

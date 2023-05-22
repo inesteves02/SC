@@ -297,8 +297,8 @@ public class ServerThread extends Thread {
                 outStream.writeObject(false);
             }
         } catch (ClassNotFoundException | IOException e) {
-            System.err.println("Error selling wine!");
             e.printStackTrace();
+            return;
         }
     }
 
@@ -333,6 +333,7 @@ public class ServerThread extends Thread {
 
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
+            return;
         }
     }
 
@@ -383,14 +384,8 @@ public class ServerThread extends Thread {
                 fileWriterH.updateUserBalance(user); // update buyer balance file
 
                 outStream.writeObject(true);
+                outStream.flush();
 
-                outStream.writeObject("Wish to rate the wine? (y/n)");
-
-                String answer = (String) inStream.readObject();
-
-                if (answer.equals("y")) {
-                    classifyWine();
-                }
                 current.addToLog(signedObject);
                 logFull(current);
 
@@ -399,6 +394,7 @@ public class ServerThread extends Thread {
             }
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
+            return;
         }
     }
 
@@ -506,6 +502,7 @@ public class ServerThread extends Thread {
                         fileWriterH.updateWine(userCatalog.getUser(wine.getSellerName()), wine);
                     } catch (IOException e) {
                         e.printStackTrace();
+                        return;
                     }
                 });
 
@@ -515,6 +512,7 @@ public class ServerThread extends Thread {
             }
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
+            return;
         }
     }
 
@@ -554,6 +552,7 @@ public class ServerThread extends Thread {
             }
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
+            return;
         }
     }
 
@@ -569,6 +568,7 @@ public class ServerThread extends Thread {
             fileWriterH.clearMessages(user);
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
     }
 
