@@ -81,7 +81,7 @@ public class ServerThread extends Thread {
     public void run() {
         try {
             System.out.println("Client connected! Waiting for authentication...");
-            String userID = (String) inStream.readObject();
+            String userID = ((String) inStream.readObject()).toLowerCase();
 
             outStream.writeObject(nonce);
             outStream.flush();
@@ -355,8 +355,8 @@ public class ServerThread extends Thread {
     private void buyWine() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         try {
 
-            String wineName = (String) inStream.readObject();
-            String sellerName = (String) inStream.readObject();
+            String wineName = ((String) inStream.readObject()).toLowerCase();
+            String sellerName = ((String) inStream.readObject()).toLowerCase();
             int quantity = Integer.parseInt((String) inStream.readObject());
 
             SignedObject signedObject = (SignedObject) inStream.readObject();
@@ -462,6 +462,10 @@ public class ServerThread extends Thread {
 
     private boolean isValidBuyInput(String wineName, String sellerName, int quantity) {
         try {
+            if (userCatalog.getUser(sellerName) == null) {
+                outStream.writeObject(false);
+                return false;
+            }
             if (!userCatalog.getUser(sellerName).haveWine(wineName)) {
                 outStream.writeObject(false);
                 return false;
