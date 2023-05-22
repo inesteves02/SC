@@ -354,6 +354,10 @@ public class ServerThread extends Thread {
     private void buyWine() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         try {
 
+            String wineName = (String) inStream.readObject();
+            String sellerName = (String) inStream.readObject();
+            int quantity = Integer.parseInt((String) inStream.readObject());
+
             SignedObject signedObject = (SignedObject) inStream.readObject();
             Signature signature = Signature.getInstance("MD5withRSA");
             boolean verify = signedObject.verify(public_key, signature);
@@ -361,10 +365,6 @@ public class ServerThread extends Thread {
                 outStream.writeObject(false);
                 return;
             }
-
-            String wineName = (String) inStream.readObject();
-            String sellerName = (String) inStream.readObject();
-            int quantity = Integer.parseInt((String) inStream.readObject());
 
             if (isValidBuyInput(wineName, sellerName, quantity)) {
 
