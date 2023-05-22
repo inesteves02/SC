@@ -104,7 +104,9 @@ public class TintolmarketServer {
 					keyStorePassword.toCharArray());
 
 			while (true) {
-				new ServerThread(serverSocket.accept(), userCatalog, wineCatalog, fileReaderH, fileWriterH).start();
+				new ServerThread(serverSocket.accept(), userCatalog, wineCatalog, fileReaderH, fileWriterH, privKey,
+						current)
+						.start();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

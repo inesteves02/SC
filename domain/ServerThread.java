@@ -1,7 +1,16 @@
 package domain;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -12,6 +21,8 @@ import java.security.SignedObject;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -32,7 +43,9 @@ public class ServerThread extends Thread {
     private PublicKey public_key;
     private User user;
     private long nonce;
-    private PrivateKey privKey;
+    private static PrivateKey privKey;
+    private Log current;
+    private static List<Block> blockchain = new ArrayList<Block>();
 
     // Declare constants for default values of wine attributes
     private static final int DEFAULT_PRICE = 0;
@@ -41,7 +54,7 @@ public class ServerThread extends Thread {
     private static final boolean DEFAULT_IS_FOR_SALE = false;
 
     ServerThread(Socket inSoc, UserCatalog userCatalog, WineCatalog wineCatalog, FileReaderHandler fileReaderH,
-            FileWriterHandler fileWriterH, PrivateKey privKey) throws IOException {
+            FileWriterHandler fileWriterH, PrivateKey privKey, Log current) throws IOException {
         this.socket = inSoc;
         nonce = new Random().nextLong();
         outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -51,6 +64,7 @@ public class ServerThread extends Thread {
         this.fileReaderH = fileReaderH;
         this.fileWriterH = fileWriterH;
         this.privKey = privKey;
+        this.current = current;
 
     }
 
@@ -149,7 +163,8 @@ public class ServerThread extends Thread {
         }
     }
 
-    private void userInteraction() throws IOException {
+    private void userInteraction()
+            throws IOException, InvalidKeyException, SignatureException, NoSuchAlgorithmException {
 
         String userInput = "";
 
@@ -201,6 +216,11 @@ public class ServerThread extends Thread {
                 read();
                 break;
 
+            case "list":
+            case "l":
+                outStream.writeObject(saveBlockchainLog(blockchain));
+                break;
+
             case "exit":
                 return;
 
@@ -242,11 +262,19 @@ public class ServerThread extends Thread {
         }
     }
 
-    private void sellWine() {
+    private void sellWine() throws InvalidKeyException, SignatureException, NoSuchAlgorithmException {
         try {
             String wineName = (String) inStream.readObject();
             double value = Double.parseDouble((String) inStream.readObject());
             int quantity = Integer.parseInt((String) inStream.readObject());
+
+            SignedObject signedObject = (SignedObject) inStream.readObject();
+            Signature signature = Signature.getInstance("MD5withRSA");
+            boolean verify = signedObject.verify(public_key, signature);
+            if (!verify) {
+                outStream.writeObject(false);
+                return;
+            }
 
             // to sell a wine, it has to be present in the user catalog
             if (user.haveWine(wineName)) {
@@ -261,6 +289,10 @@ public class ServerThread extends Thread {
                 wineCatalog.addWine(wine);
 
                 outStream.writeObject(true);
+
+                current.addToLog(signedObject);
+                logFull(current);
+
             } else {
                 outStream.writeObject(false);
             }
@@ -319,8 +351,17 @@ public class ServerThread extends Thread {
         dis.close();
     }
 
-    private void buyWine() {
+    private void buyWine() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         try {
+
+            SignedObject signedObject = (SignedObject) inStream.readObject();
+            Signature signature = Signature.getInstance("MD5withRSA");
+            boolean verify = signedObject.verify(public_key, signature);
+            if (!verify) {
+                outStream.writeObject(false);
+                return;
+            }
+
             String wineName = (String) inStream.readObject();
             String sellerName = (String) inStream.readObject();
             int quantity = Integer.parseInt((String) inStream.readObject());
@@ -350,11 +391,76 @@ public class ServerThread extends Thread {
                 if (answer.equals("y")) {
                     classifyWine();
                 }
+                current.addToLog(signedObject);
+                logFull(current);
+
             } else {
                 outStream.writeObject(false);
             }
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void logFull(Log currentLog)
+            throws InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException {
+        // Check if log has reached its maximum size
+        if (currentLog.getLogSize() == 5) {
+            // Create initial hash of all zeros and convert to string
+            byte[] firstBytes = new byte[32];
+            String string = Base64.getEncoder().encodeToString(firstBytes);
+            Block newBlock = loadingLogFile(currentLog, string);
+            nextLog(currentLog, newBlock, currentLog.getBlockNumber());
+        }
+    }
+
+    // returns the newBlock
+    private static Block loadingLogFile(Log currentLog, String string)
+            throws IOException, InvalidKeyException, SignatureException, NoSuchAlgorithmException {
+        // Carrega o ficheiro do log
+        byte[] logBytes = Files.readAllBytes(Paths.get(currentLog.getLogFile()));
+
+        // Assina tudo o que esta no log
+        SignedObject signedFile = new SignedObject(logBytes, privKey, Signature.getInstance("MD5withRSA"));
+        String sigString = Base64.getEncoder().encodeToString(signedFile.getSignature());
+        // Adiciona assinatura
+        currentLog.writeToLog(sigString);
+
+        logBytes = Files.readAllBytes(Paths.get(currentLog.getLogFile()));
+        String fileBytesString = Base64.getEncoder().encodeToString(logBytes);
+
+        // Entao cria um novo block e adiciona o à blockchain
+        Block newBlock = new Block(fileBytesString, string);
+        blockchain.add(newBlock);
+        return newBlock;
+    }
+
+    public void nextLog(Log currentLog, Block block, long blockNum) {
+
+        if (blockNum == 1) {
+            // Passa ao proximo ficheiro de log
+            currentLog.addBlockNumber();
+            currentLog.createNewFile();
+            currentLog.clearTransactions();
+            // Escreve no prox log o hash do bloco anterior, associa o log ao hash anterior
+            currentLog.writeToLog(block.getHash() + "\n");
+            currentLog.setPrevHash(block.getHash());
+            // Escreve o numero do bloco e o nr de transações
+            currentLog.writeToLog(currentLog.getBlockNumber() + "\n");
+            currentLog.writeToLog(currentLog.getNrTrans() + "\n");
+        } else {
+            String prevHash = blockchain.get(blockchain.size() - 1).getHash();
+
+            // Passa ao proximo ficheiro de log
+            currentLog.addBlockNumber();
+            currentLog.createNewFile();
+            currentLog.clearTransactions();
+            // Escreve no prox log o hash do bloco anterior, associa o log ao hash anterior
+            currentLog.writeToLog(prevHash + "\n");
+            currentLog.setPrevHash(prevHash);
+            // Escreve o numero do bloco e o nr de transações
+            currentLog.writeToLog(currentLog.getBlockNumber() + "\n");
+            currentLog.writeToLog(currentLog.getNrTrans() + "\n");
         }
     }
 
@@ -465,4 +571,15 @@ public class ServerThread extends Thread {
             e.printStackTrace();
         }
     }
+
+    public synchronized String saveBlockchainLog(List<Block> blockchain) throws IOException {
+
+        StringBuilder sb = new StringBuilder();
+        for (Block b : blockchain) {
+            sb.append(b.getData() + "\n");
+        }
+
+        return sb.toString();
+    }
+
 }

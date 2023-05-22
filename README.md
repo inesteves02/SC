@@ -33,8 +33,43 @@ Se o usuário não conseguir se autenticar no servidor, a aplicação deve termi
 - classify <wine> <stars>: atribui ao vinho wine uma classificação de 1 a 5, indicada por stars. Caso o vinho wine não exista, deve ser devolvido um erro.
 - talk <user> <message>: permite enviar uma mensagem privada ao utilizador user (por exemplo, uma pergunta relativa a um vinho à venda). Caso o utilizador não exista, deve ser devolvido um erro.
 - read: permite ler as novas mensagens recebidas. Deve ser apresentada a identificação do remetente e a respectiva mensagem. As mensagens são removidas da caixa de mensagens do servidor depois de serem lidas.
+- list: que devolve uma lista de todas as transações feitas por ordem 
+
 
 O servidor mantém um arquivo com os usuários do sistema e suas respectivas senhas. As informações relativas aos vinhos e as caixas de mensagens de cada usuário também devem ser mantidas em arquivo para evitar a perda de informação no caso de uma falha do servidor.
+
+## Compilar o projeto 
+
+
+Para compilar é ir ao Servidor e Cliente:
+
+
+## Executar o projeto 
+
+
+Server: java -jar Server.jar <port> <password-cifra> <keystore> <password-keystore>
+Exemplo: java -jar Server.jar password keystore.server servidor
+
+Cliente: java -jar Client.jar <serverAddress> <truststore> <keystore> <password-keystore> <userID>
+Exemplo: java -jar Client.jar localhost:12345 truststore.client keystore.Vasco servidor Vasco
+
+
+Keystore do servidor:
+
+Nome da keystore: keystore.server
+
+Alias: tintolmarketserver Password: servidor
+
+Truststore:
+
+Nome da truststore: truststore.client Password: servidor
+
+Keystore de cada client:
+
+Nome: Vasco password: servidor
+
+Nome: Ines password: servidor
+
 
 ## Autores
 

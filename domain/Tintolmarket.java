@@ -116,7 +116,7 @@ public class Tintolmarket {
                 throw new AuthenticationException(userID + " authentication failed.");
             }
 
-            clientInteraction();
+            clientInteraction(privateKey);
             in.close();
             out.close();
             sc.close();
@@ -135,7 +135,7 @@ public class Tintolmarket {
 
     }
 
-    private static void clientInteraction() {
+    private static void clientInteraction(PrivateKey privateKey) {
         try {
             System.out.println(HELP);
 
@@ -146,18 +146,18 @@ public class Tintolmarket {
                 input = sc.nextLine();
                 String[] inputArray = input.split(" ");
 
-                processCommands(inputArray);
+                processCommands(inputArray, privateKey);
 
             } while (!input.equalsIgnoreCase("exit"));
 
             out.writeObject(input);
             sc.close();
         } catch (Exception e) {
-            System.err.println("Error. Disconnecting...");
+            clientInteraction(privateKey);
         }
     }
 
-    private static void processCommands(String[] inputArray) throws Exception {
+    private static void processCommands(String[] inputArray, PrivateKey privateKey) throws Exception {
 
         switch (inputArray[0].toLowerCase()) {
             case "add":
@@ -186,10 +186,19 @@ public class Tintolmarket {
 
             case "sell":
             case "s":
+
                 out.writeObject(inputArray[0]);
                 out.writeObject(inputArray[1]);
                 out.writeObject(inputArray[2]);
                 out.writeObject(inputArray[3]);
+
+                StringBuilder sb = new StringBuilder();
+                for (String string : inputArray) {
+                    sb.append(string + " ");
+                }
+
+                SignedObject sig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
+                out.writeObject(sig);
 
                 if ((boolean) in.readObject()) {
                     System.out.println("Wine to sell added successfully");
@@ -206,10 +215,10 @@ public class Tintolmarket {
                 String result = (String) in.readObject();
 
                 if (result.equals("No wines found!")) {
-                    System.out.println(result);
                     return;
                 }
 
+                System.out.println(result);
                 // loop to recieve the images from the server
                 int numberOfImages = (int) in.readObject();
 
@@ -293,6 +302,18 @@ public class Tintolmarket {
             case "help":
             case "h":
                 System.out.println(HELP);
+                break;
+
+            case "list":
+            case "l":
+                out.writeObject(inputArray[0]);
+                String list = (String) in.readObject();
+
+                if (list.isEmpty()) {
+                    System.out.println("No transactions");
+                } else {
+                    System.out.println(list);
+                }
                 break;
 
             case "exit":
