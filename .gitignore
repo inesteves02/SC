@@ -2,6 +2,6 @@
 .idea
 
 # Ignore all files outside of folder controllers, domain and encrypt #
-!controllers/*
-!domain/*
-!encrypt/*
+controllers/**
+domain/**
+encrypt/**
