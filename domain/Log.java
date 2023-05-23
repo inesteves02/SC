@@ -1,9 +1,13 @@
 package domain;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SignedObject;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -12,10 +16,9 @@ import java.util.List;
 public class Log implements Serializable {
 
     private List<SignedObject> transactions = new ArrayList<>();
-    private long nrTransactions = 5;
+    private long nmr_transactions = 0;
     private long blockNumber = 1;
     private String prevHash;
-
 
     public Log() {
         File f = new File("block_" + blockNumber + ".blk");
@@ -26,7 +29,6 @@ public class Log implements Serializable {
         }
     }
 
-
     public synchronized void addToLog(SignedObject transaction) {
         // Add the transaction to the list of transactions
         this.transactions.add(transaction);
@@ -35,15 +37,24 @@ public class Log implements Serializable {
         String signatureString = Base64.getEncoder().encodeToString(transaction.getSignature());
         try {
             writeToLog((String) transaction.getObject() + ":" + signatureString + "\n");
+
+            // Increment the number of transactions
+            nmr_transactions++;
+
+            // Increment on the 3 line of block file
+            String blockFile = "block_" + blockNumber + ".blk";
+            List<String> lines = Files.readAllLines(Paths.get(blockFile));
+            lines.set(2, String.valueOf(nmr_transactions));
+            Files.write(Paths.get(blockFile), lines);
+
         } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
 
         // Check if the log has reached its maximum size (e.g. 5 transactions)
-        if (transactions.size() == nrTransactions ) {
-            // If so, seal the block and create a new one
-            sealBlock();
-            createNewBlock();
+        if (transactions.size() == 5) {
+
+            System.out.println("Sealing block " + blockNumber + "...");
         }
     }
 
@@ -57,82 +68,37 @@ public class Log implements Serializable {
         }
     }
 
-    public synchronized void sealBlock() {
-        // create a new block file
-        addBlockNumber();
-        createNewFile();
-        // write the hash of the previous block to the new block file
-        setPrevHash(prevHash);
-        writeToLog("Previous block hash: " + prevHash + "\n");
-        // write the transactions in the current block to the new block file
-        writeToLog("Transactions:\n");
-        for (SignedObject transaction : transactions) {
-            String signatureString = Base64.getEncoder().encodeToString(transaction.getSignature());
-            try {
-                writeToLog((String) transaction.getObject() + ":" + signatureString + "\n");
-            } catch (ClassNotFoundException | IOException e) {
-                e.printStackTrace();
-            }
-        }
-        // write the current block number to the new block file
-        writeToLog("Block number: " + blockNumber + "\n");
-    }
-
-
-
-
     public synchronized List<SignedObject> getTransactions() {
         return transactions;
     }
-
-
 
     public synchronized int getLogSize() {
         return transactions.size();
     }
 
-
     public synchronized void clearTransactions() {
         transactions.clear();
     }
-
 
     public synchronized long getBlockNumber() {
         return blockNumber;
     }
 
-
     public synchronized void addBlockNumber() {
         blockNumber++;
     }
-
-
-
-    public synchronized void createNewBlock() {
-        // Create a new file for the next block
-        File blockFile = new File("block_" + blockNumber + ".blk");
-        try {
-            blockFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     public synchronized void setPrevHash(String prevHash) {
         this.prevHash = prevHash;
     }
 
-
     public synchronized String getPrevHash() {
         return prevHash;
     }
 
-
     public String getLogFile() {
         return "block_" + blockNumber + ".blk";
     }
-
 
     public synchronized void createNewFile() {
         try {
@@ -149,8 +115,11 @@ public class Log implements Serializable {
         }
     }
 
-
     public synchronized long getNrTrans() {
-        return this.nrTransactions;
+        return this.nmr_transactions;
+    }
+
+    public void setNmrTransactions(int i) {
+        this.nmr_transactions = i;
     }
 }

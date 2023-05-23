@@ -28,7 +28,6 @@ public class Tintolmarket {
     private static ObjectOutputStream out;
     private static Scanner sc;
     private static StringBuilder sb;
-    private static SignedObject sig;
     private static final String HELP = "Options available:\n"
             + "\tadd <wine> <image> - add a new wine to the catalog\n "
             + "\tsell <wine> <value> <quantity> - sell a wine from the catalog\n "
@@ -39,7 +38,9 @@ public class Tintolmarket {
             + "\ttalk <user> <message> - send a message to another user\n "
             + "\tread - read the messages received\n "
             + "\texit - exit the program\n"
-            + "\tlist - list all the transactions that have been made\n";
+            + "\tlist - list all the transactions that have been made\n"
+            + "\ttest1 - simulate 5 add and sell transactions\n"
+            + "\ttest2 - simulate 20 add and sell transactions\n";
 
     public static void main(String[] args) {
         try {
@@ -146,6 +147,7 @@ public class Tintolmarket {
             sb = new StringBuilder();
 
             do {
+                sb.setLength(0); // Reset the StringBuilder for each command
                 input = sc.nextLine();
                 String[] inputArray = input.split(" ");
 
@@ -156,7 +158,8 @@ public class Tintolmarket {
             out.writeObject(input);
             sc.close();
         } catch (Exception e) {
-            clientInteraction(privateKey);
+            System.err.println("Error ocurred, maybe bad input. Shutting down...");
+            return;
         }
     }
 
@@ -199,8 +202,8 @@ public class Tintolmarket {
                     sb.append(string + " ");
                 }
 
-                sig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
-                out.writeObject(sig);
+                SignedObject sellSig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
+                out.writeObject(sellSig);
 
                 if ((boolean) in.readObject()) {
                     System.out.println("Wine to sell added successfully");
@@ -250,13 +253,12 @@ public class Tintolmarket {
                 out.writeObject(inputArray[2]);
                 out.writeObject(inputArray[3]);
 
-                StringBuilder sb = new StringBuilder();
                 for (String string : inputArray) {
                     sb.append(string + " ");
                 }
 
-                sig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
-                out.writeObject(sig);
+                SignedObject buySig = new SignedObject(sb.toString(), privateKey, Signature.getInstance("MD5withRSA"));
+                out.writeObject(buySig);
 
                 if ((boolean) in.readObject()) {
                     System.out.println("Wine bought successfully");
@@ -329,6 +331,74 @@ public class Tintolmarket {
 
             case "exit":
                 out.writeObject(inputArray[0]);
+                break;
+
+            case "test1":
+
+                // Add 5 wines
+                for (int i = 1; i <= 5; i++) {
+                    out.writeObject("add");
+                    out.writeObject("casal" + i);
+
+                    String image = "teste.png";
+
+                    String imageFormat2 = image.substring(image.lastIndexOf(".") + 1);
+                    out.writeObject(imageFormat2);
+
+                    // Read image
+                    File file2 = new File(image);
+                    byte[] imageSent2 = new byte[(int) file2.length()];
+                    DataInputStream dis2 = new DataInputStream(new FileInputStream(file2));
+                    dis2.readFully(imageSent2);
+                    out.writeObject(imageSent2);
+                    dis2.close();
+                }
+
+                // Sell 5 wines
+                for (int i = 1; i <= 5; i++) {
+                    out.writeObject("sell");
+                    out.writeObject("casal" + i);
+                    out.writeObject("10");
+                    out.writeObject("20");
+
+                    SignedObject sellSig2 = new SignedObject("sell casal" + i + " 10 20", privateKey,
+                            Signature.getInstance("MD5withRSA"));
+                    out.writeObject(sellSig2);
+                }
+                break;
+
+            case "test2":
+
+                // Add 20 wines
+                for (int i = 1; i <= 20; i++) {
+                    out.writeObject("add");
+                    out.writeObject("casal" + i);
+
+                    String image = "teste.png";
+
+                    String imageFormat2 = image.substring(image.lastIndexOf(".") + 1);
+                    out.writeObject(imageFormat2);
+
+                    // Read image
+                    File file2 = new File(image);
+                    byte[] imageSent2 = new byte[(int) file2.length()];
+                    DataInputStream dis2 = new DataInputStream(new FileInputStream(file2));
+                    dis2.readFully(imageSent2);
+                    out.writeObject(imageSent2);
+                    dis2.close();
+                }
+
+                // Sell 20 wines
+                for (int i = 1; i <= 20; i++) {
+                    out.writeObject("sell");
+                    out.writeObject("casal" + i);
+                    out.writeObject("10");
+                    out.writeObject("20");
+
+                    SignedObject sellSig2 = new SignedObject("sell casal" + i + " 10 20", privateKey,
+                            Signature.getInstance("MD5withRSA"));
+                    out.writeObject(sellSig2);
+                }
                 break;
 
             default:

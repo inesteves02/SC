@@ -21,7 +21,6 @@ import java.security.SignedObject;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Random;
@@ -45,7 +44,7 @@ public class ServerThread extends Thread {
     private long nonce;
     private static PrivateKey privKey;
     private Log current;
-    private static List<Block> blockchain = new ArrayList<Block>();
+    private static List<Block> blockchain;
 
     // Declare constants for default values of wine attributes
     private static final int DEFAULT_PRICE = 0;
@@ -54,7 +53,7 @@ public class ServerThread extends Thread {
     private static final boolean DEFAULT_IS_FOR_SALE = false;
 
     ServerThread(Socket inSoc, UserCatalog userCatalog, WineCatalog wineCatalog, FileReaderHandler fileReaderH,
-            FileWriterHandler fileWriterH, PrivateKey privKey, Log current) throws IOException {
+            FileWriterHandler fileWriterH, PrivateKey privKey, Log current, List<Block> blockchain) throws IOException {
         this.socket = inSoc;
         nonce = new Random().nextLong();
         outStream = new ObjectOutputStream(socket.getOutputStream());
@@ -63,9 +62,9 @@ public class ServerThread extends Thread {
         this.wineCatalog = wineCatalog;
         this.fileReaderH = fileReaderH;
         this.fileWriterH = fileWriterH;
-        this.privKey = privKey;
+        ServerThread.privKey = privKey;
         this.current = current;
-
+        ServerThread.blockchain = blockchain;
     }
 
     /*
@@ -156,11 +155,27 @@ public class ServerThread extends Thread {
             inStream.close();
             outStream.close();
             socket.close();
+            saveBlockChainTxt(blockchain);
 
         } catch (IOException | ClassNotFoundException | CertificateException | NoSuchAlgorithmException
                 | InvalidKeyException | SignatureException e) {
             e.printStackTrace();
         }
+    }
+
+    private void saveBlockChainTxt(List<Block> blockchain) throws IOException {
+        File file = new File("blockchain.txt");
+
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+
+        // Save the object BlockChain in a file
+        FileOutputStream fos = new FileOutputStream(file);
+        ObjectOutputStream oos = new ObjectOutputStream(fos);
+        oos.writeObject(blockchain);
+        oos.close();
+        fos.close();
     }
 
     private void userInteraction()
@@ -218,7 +233,7 @@ public class ServerThread extends Thread {
 
             case "list":
             case "l":
-                outStream.writeObject(saveBlockchainLog(blockchain));
+                list();
                 break;
 
             case "exit":
@@ -232,17 +247,43 @@ public class ServerThread extends Thread {
         userInteraction();
     }
 
+    private void list() throws IOException {
+
+        // - obtém a lista de todas as transações que já foram efetuadas e que se
+        // encontram armazenadas na blockchain
+
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+
+        for (Block block : blockchain) {
+
+            // Decode the data from the block that is in base64
+            byte[] decodedData = Base64.getDecoder().decode(block.getData());
+
+            // Remove the first 3 lines of the decoded data
+            String decodedDataString = new String(decodedData);
+            decodedDataString = decodedDataString.substring(decodedDataString.indexOf("\n") + 1);
+            decodedDataString = decodedDataString.substring(decodedDataString.indexOf("\n") + 1);
+            decodedDataString = decodedDataString.substring(decodedDataString.indexOf("\n") + 1);
+
+            sb.append("From block " + i + ":\n");
+            sb.append(decodedDataString + "\n\n");
+            i++;
+        }
+
+        outStream.writeObject(sb.toString());
+    }
+
     private void addWine() {
         try {
 
             String wineName = (String) inStream.readObject();
             String imageFormat = (String) inStream.readObject();
+            // recieve the image from the client
+            byte[] image = (byte[]) inStream.readObject();
 
             // if the wine doesn't already exists, then we add it to the catalog
             if (!user.haveWine(wineName)) {
-
-                // recieve the image from the client
-                byte[] image = (byte[]) inStream.readObject();
 
                 // save the image in the user folder
                 fileWriterH.saveImage(image, wineName, imageFormat, user);
@@ -276,8 +317,9 @@ public class ServerThread extends Thread {
                 return;
             }
 
-            // to sell a wine, it has to be present in the user catalog
-            if (user.haveWine(wineName)) {
+            // to sell a wine, it has to be present in the user catalog and if it isnt
+            // already for sale
+            if (user.haveWine(wineName) && !user.getWine(wineName).isForSale()) {
 
                 Wine wine = userCatalog.getUser(user.getName()).getWine(wineName);
                 wine.setPrice(value);
@@ -291,7 +333,15 @@ public class ServerThread extends Thread {
                 outStream.writeObject(true);
 
                 current.addToLog(signedObject);
-                logFull(current);
+                checkIfLogFull(current);
+
+                FileOutputStream outputFileLog = new FileOutputStream("logs.txt");
+                ObjectOutputStream outputObjLog = new ObjectOutputStream(outputFileLog);
+                outputObjLog.writeObject(current);
+                outputFileLog.close();
+                outputObjLog.close();
+
+                saveBlockChainTxt(blockchain);
 
             } else {
                 outStream.writeObject(false);
@@ -387,7 +437,15 @@ public class ServerThread extends Thread {
                 outStream.flush();
 
                 current.addToLog(signedObject);
-                logFull(current);
+                checkIfLogFull(current);
+
+                FileOutputStream outputFileLog = new FileOutputStream("logs.txt");
+                ObjectOutputStream outputObjLog = new ObjectOutputStream(outputFileLog);
+                outputObjLog.writeObject(current);
+                outputFileLog.close();
+                outputObjLog.close();
+
+                saveBlockChainTxt(blockchain);
 
             } else {
                 outStream.writeObject(false);
@@ -396,6 +454,76 @@ public class ServerThread extends Thread {
             e.printStackTrace();
             return;
         }
+    }
+
+    public void checkIfLogFull(Log log) {
+        if (log.getLogSize() == 5) {
+            if (log.getBlockNumber() == 1) {
+                createGenesisBlock(log);
+            } else {
+                createBlock(log);
+            }
+        }
+    }
+
+    private void createGenesisBlock(Log log) {
+        byte[] startBytes = new byte[32];
+        String startString = Base64.getEncoder().encodeToString(startBytes);
+
+        try {
+            byte[] logBytes = Files.readAllBytes(Paths.get(log.getLogFile()));
+            SignedObject signedFile = signLog(logBytes);
+            String sigString = Base64.getEncoder().encodeToString(signedFile.getSignature());
+            log.writeToLog(sigString);
+
+            logBytes = Files.readAllBytes(Paths.get(log.getLogFile()));
+            String fileBytesString = Base64.getEncoder().encodeToString(logBytes);
+
+            Block newBlock = new Block(fileBytesString, startString);
+            blockchain.add(newBlock);
+
+            prepareNextLog(log, newBlock.getHash());
+        } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private SignedObject signLog(byte[] logBytes)
+            throws InvalidKeyException, SignatureException, NoSuchAlgorithmException, IOException {
+        SignedObject signedFile = new SignedObject(logBytes, privKey, Signature.getInstance("MD5withRSA"));
+        return signedFile;
+    }
+
+    private void createBlock(Log log) {
+        String prevHash = blockchain.get(blockchain.size() - 1).getHash();
+
+        try {
+            byte[] logBytes = Files.readAllBytes(Paths.get(log.getLogFile()));
+            SignedObject signedFile = signLog(logBytes);
+            String sigString = Base64.getEncoder().encodeToString(signedFile.getSignature());
+            log.writeToLog(sigString);
+
+            logBytes = Files.readAllBytes(Paths.get(log.getLogFile()));
+            String fileBytesString = Base64.getEncoder().encodeToString(logBytes);
+
+            Block newBlock = new Block(fileBytesString, prevHash);
+            blockchain.add(newBlock);
+
+            prepareNextLog(log, newBlock.getHash());
+        } catch (IOException | InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void prepareNextLog(Log log, String prevHash) {
+        log.addBlockNumber();
+        log.createNewFile();
+        log.clearTransactions();
+        log.setNmrTransactions(0);
+        log.writeToLog(prevHash + "\n");
+        log.setPrevHash(prevHash);
+        log.writeToLog(log.getBlockNumber() + "\n");
+        log.writeToLog(log.getNrTrans() + "\n");
     }
 
     public void logFull(Log currentLog)

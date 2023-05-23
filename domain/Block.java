@@ -28,22 +28,21 @@ public class Block implements Serializable {
     public String calculateBlockHash() {
         String dataToHash = data;
         MessageDigest digest = null;
+        StringBuffer buffer = new StringBuffer();
         try {
             // Create SHA-256 hash
             digest = MessageDigest.getInstance("SHA-256");
             final byte[] bytes = digest.digest(dataToHash.getBytes());
 
-            StringBuffer buffer = new StringBuffer();
             IntStream.range(0, bytes.length)
                     .mapToObj(i -> bytes[i])
                     .forEach(b -> buffer.append(String.format("%02x", b)));
 
-            return buffer.toString();
         } catch (NoSuchAlgorithmException ex) {
             // Handle exception
             ex.printStackTrace();
         }
-        return "";
+        return buffer.toString();
     }
 
     public String getHash() {
